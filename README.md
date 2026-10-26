@@ -157,6 +157,11 @@ bot match → puzzle solve → settings → mobile; and online rooms → invite 
 → Elo → colour-swapped rematch → disconnect/reconnect → global matchmaking → mobile. Both run with zero
 console errors and no horizontal overflow at 390 px.
 
+**Production online verification (2026-10-27):** two isolated Chrome contexts completed the full flow
+against `wss://barricade-w45u.onrender.com/ws` from https://barricade-ruby.vercel.app — room creation,
+invite-link join, server-relayed moves, Elo update, colour-swapped rematch, reconnect inside the grace
+window, global matchmaking, and a 390 px lobby with no overflow. Zero console errors.
+
 ## Data and privacy
 
 - Local profile, settings, active local match and results live in `localStorage`.

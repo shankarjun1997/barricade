@@ -100,3 +100,4 @@ credentials exist locally but no billing code is active.
 | Production web build / server bundle | Passed |
 | Local browser smoke | Passed (`npm run smoke`) |
 | Two-player online browser smoke | Passed (`npm run smoke:online`) |
+| Production two-browser online test (Render + Vercel) | Passed 2026-10-27 — rooms, moves, Elo, rematch, reconnect, global queue, mobile |
