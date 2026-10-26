@@ -13,13 +13,21 @@
     "preview": "npm run preview -w @barricade/web",
     "test": "npm run test -w @barricade/engine && npm run test -w @barricade/bots && npm run test -w @barricade/web",
     "typecheck": "npm run typecheck -w @barricade/engine && npm run typecheck -w @barricade/bots && npm run typecheck -w @barricade/web",
-    "verify": "npm run typecheck && npm test && npm run build",
-    "smoke": "node scripts/smoke.mjs"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build",
+    "smoke": "node scripts/smoke.mjs",
+    "lint": "eslint ."
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
-    "playwright-core": "^1.64.1"
-  }
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^6.1.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^16.5.0",
+    "playwright-core": "^1.64.1",
+    "typescript-eslint": "^8.72.1"
+  },
+  "type": "module"
 }

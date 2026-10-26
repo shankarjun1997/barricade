@@ -102,7 +102,8 @@ Identical state + seed + personality always produces the same move, so bugs are 
 npm test        # engine + bots + web logic
 npm run typecheck
 npm run build
-npm run verify  # all three
+npm run lint
+npm run verify  # lint + typecheck + tests + build
 ```
 
 Current suite: **42 engine tests, 15 bot tests, 23 web logic tests** — all passing.

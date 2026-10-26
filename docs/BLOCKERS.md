@@ -25,7 +25,12 @@ Nothing below is faked in the product. Items are listed with the exact prerequis
    Not started. Requires signing certificates, store listings and Apple/Google billing rules for digital
    subscriptions. Web Phase C stays installable via PWA manifest meanwhile.
 7. **Custom domain.**
-   Not chosen. The Vercel deployment uses a `*.vercel.app` URL for now.
+   Not chosen. The Vercel deployment will use a `*.vercel.app` URL until a domain is picked.
+8. **Vercel CLI token (current deployment blocker).**
+   The token stored in global memory returns `403` from `api.vercel.com`; the CLI is logged out. A fresh
+   token (or an interactive `vercel login`) is required to create/verify the production deployment.
+   Everything else is deployment-ready: verified build, SPA rewrite config, smoke test. GitHub push
+   succeeded (`shankarjun1997/barricade`, private).
 
 ## Product decisions to confirm later
 

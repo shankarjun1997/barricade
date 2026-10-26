@@ -24,7 +24,6 @@ import {
   DIRECTIONS,
   WALL_DIRECTIONS,
   inBounds,
-  pointKey,
   samePoint,
   shortestPath,
   validateConfig,

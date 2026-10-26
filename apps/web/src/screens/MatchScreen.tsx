@@ -57,7 +57,7 @@ export function MatchScreen() {
   // Persist critical transitions immediately.
   useEffect(() => {
     if (match) saveMatch(match);
-  }, [match?.id, match?.game.history.length, match?.game.result, match?.failed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [match?.id, match?.game.history.length, match?.game.result, match?.failed]);
 
   // Persist running clocks at a gentle cadence.
   useEffect(() => {
@@ -77,7 +77,7 @@ export function MatchScreen() {
       if (next !== current) update(next);
     }, 200);
     return () => window.clearInterval(timer);
-  }, [match?.id, match?.initialMs, match?.game.result, update]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [match?.id, match?.initialMs, match?.game.result, update]);
 
   // Bot turn.
   useEffect(() => {
@@ -99,7 +99,7 @@ export function MatchScreen() {
       sfx(move.kind === 'wall' ? 'wall' : 'move');
     }, 480);
     return () => window.clearTimeout(timer);
-  }, [match?.id, match?.game.ply, match?.game.result, match?.controller, match?.failed, sfx, update]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [match?.id, match?.game.ply, match?.game.result, match?.controller, match?.failed, sfx, update]);
 
   // Puzzle opponent passes.
   useEffect(() => {
@@ -112,7 +112,7 @@ export function MatchScreen() {
       update(passPuzzleOpponent(current));
     }, 240);
     return () => window.clearTimeout(timer);
-  }, [match?.id, match?.game.ply, match?.game.result, match?.controller, match?.failed, update]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [match?.id, match?.game.ply, match?.game.result, match?.controller, match?.failed, update]);
 
   // Settle once per match, then open the result screen.
   useEffect(() => {
@@ -138,7 +138,7 @@ export function MatchScreen() {
       navigate('/result', { replace: true });
     }, 1200);
     return () => window.clearTimeout(timer);
-  }, [match?.id, match?.game.result, match?.failed, profile, updateProfile, sfx, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [match?.id, match?.game.result, match?.failed, profile, updateProfile, sfx, navigate]);
 
   const canAct = Boolean(match) && !match!.game.result && !match!.failed && (match!.controller === 'local' || match!.game.turn === 'blue');
 
