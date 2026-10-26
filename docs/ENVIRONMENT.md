@@ -1,44 +1,62 @@
 # Environment variables
 
-Phase C (the current build) requires **no environment variables** to run locally or as a static
-deployment. The game is fully local.
-
-## Web client
+## Web client (Vite)
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `VITE_API_URL` | No | Future game API base URL. Empty in Phase C. |
-| `VITE_RAZORPAY_KEY_ID` | No | Future public Razorpay key id. Never put a key secret in a `VITE_` variable. |
+| `VITE_WS_URL` | For online play | WebSocket URL of the game server, e.g. `wss://barricade-server.up.railway.app/ws`. If empty in local development, the client falls back to `ws://localhost:8787/ws`. In production an empty value disables online play with an explicit setup screen. |
+| `VITE_API_URL` | No | Reserved for future HTTP APIs. |
+| `VITE_RAZORPAY_KEY_ID` | No | Future public Razorpay key id. Never place a key secret in a `VITE_*` variable. |
 
-Copy `.env.example` to `.env.local` for local overrides. `.env.local` is git-ignored.
+`VITE_*` values are baked into the build. After changing them on Vercel, redeploy.
 
-## Game server (Phase B, not built yet)
+## Game server
 
-These are reserved. They are documented now so secrets never leak into the client and so deployment
-configuration is ready.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `8787` (`8080` in Docker) | HTTP/WebSocket listen port |
+| `HOST` | `0.0.0.0` | Listen address |
+| `NODE_ENV` | `development` | Set `production` on the server |
+| `ALLOWED_ORIGINS` | localhost + production Vercel origins | Comma-separated browser origins allowed to open a WebSocket |
+| `DATA_FILE` | `./data/state.json` (`/data/state.json` in Docker) | JSON persistence path; use a persistent volume |
+| `RECONNECT_GRACE_MS` | `60000` | Disconnect grace window before forfeit |
+| `LOG_LEVEL` | `info` | Fastify/pino log level |
+
+The server does not need a database or Redis for the current single-instance build. Those are planned.
+
+## Local development
+
+```bash
+# Terminal 1
+npm run server:dev        # ws://localhost:8787/ws, writes apps/server/data/state.json
+
+# Terminal 2
+npm run dev               # http://localhost:5173, online defaults to localhost server
+```
+
+No environment variables are required for local play. To use a custom server, create `.env.local`:
+
+```bash
+VITE_WS_URL=ws://localhost:8787/ws
+```
+
+## Reserved for accounts and billing (not active)
 
 | Variable | Purpose |
 | --- | --- |
-| `PORT`, `HOST` | Fastify listen address |
-| `DATABASE_URL` | PostgreSQL connection (Railway/Neon/Supabase) |
-| `REDIS_URL` | Matchmaking queues, rate limits, presence |
-| `SESSION_SECRET` | 32-byte random hex for session signing |
-| `CORS_ORIGIN` | Allowed web origin |
+| `DATABASE_URL` | PostgreSQL (future replacement for the JSON store) |
+| `REDIS_URL` | Distributed queues, rate limits, presence |
+| `SESSION_SECRET` | Session signing for accounts |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Server-only Razorpay credentials |
-| `RAZORPAY_WEBHOOK_SECRET` | Webhook HMAC verification |
-| `RAZORPAY_PLAN_ID_PLUS` / `_PRO` / `_ELITE` | Subscription plan ids |
-| `BILLING_MODE` | `test` (default) or `live`; payments are disabled unless fully configured |
+| `RAZORPAY_WEBHOOK_SECRET` | Webhook signature verification |
+| `RAZORPAY_PLAN_ID_*` | Subscription plan ids |
+| `BILLING_MODE` | `test` (default) or `live` |
 
-## Local development credentials
+## Local secrets
 
-This workspace already has a `.env.local` (git-ignored) containing the Razorpay **test-mode** key id and
-secret copied from the user's existing global configuration. They are not used by Phase C and must
-never be exposed to the browser or committed. Billing stays off until the server, webhook verification
-and cancellation/refund flows are implemented and tested in Phase B.
+This workspace has a git-ignored `.env.local` containing the Razorpay **test-mode** key id and secret
+from the user's existing global configuration. They are not used by the online server or the web build.
+Billing stays disabled until the payment lifecycle is implemented and verified.
 
-## Rules
-
-- Never commit `.env`, `.env.local` or real secrets. Only `.env.example` is tracked.
-- Server secrets never appear in `VITE_*` variables.
-- Rotate any credential that is accidentally exposed.
-- Production secrets are set in the hosting provider (Vercel/Railway), not in the repository.
+Never commit `.env`, `.env.local` or real secrets. Only `.env.example` is tracked. Production secrets
+belong in the hosting provider (Vercel/Railway), not in the repository.

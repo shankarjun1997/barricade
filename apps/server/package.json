@@ -1,0 +1,31 @@
+{
+  "name": "@barricade/server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/index.js --sourcemap --external:fastify --external:@fastify/* --external:zod --external:ws",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@barricade/engine": "*",
+    "@barricade/protocol": "*",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/websocket": "^11.2.0",
+    "fastify": "^5.6.2",
+    "zod": "^4.1.12",
+    "@fastify/rate-limit": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.25.11",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12",
+    "ws": "^8.18.3"
+  }
+}

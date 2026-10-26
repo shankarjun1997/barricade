@@ -30,7 +30,7 @@ import {
 } from '../lib/match.js';
 import { createPuzzleMatch, puzzleById } from '../lib/puzzles.js';
 import { applySummary, buildSummary, saveLastResult } from '../lib/settle.js';
-import { describeMove, formatDuration, formatTimeControl, reasonLabel } from '../lib/format.js';
+import { describeMove, formatDuration, formatTimeControl, plural, reasonLabel } from '../lib/format.js';
 
 type ModalKind = 'resign' | 'draw' | 'restart' | null;
 
@@ -441,7 +441,7 @@ export function MatchScreen() {
           <div className="card">
             <div className="row-between">
               <div className="card-title" style={{ marginBottom: 0 }}>Move log</div>
-              <span className="pill">{match.game.history.length} plies</span>
+              <span className="pill">{match.game.history.length} {plural(match.game.history.length, 'ply', 'plies')}</span>
             </div>
             {history.length === 0 ? (
               <div className="empty-note">No moves yet. Blue opens the duel.</div>

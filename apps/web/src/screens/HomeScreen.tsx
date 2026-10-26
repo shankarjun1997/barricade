@@ -38,22 +38,22 @@ export function HomeScreen() {
             your opponent's route. Simple to learn, brutal to master.
           </p>
           <div className="hero-actions">
-            <Link className="btn btn-primary" to="/config?mode=dash">
-              Quick match
+            <Link className="btn btn-primary" to="/online">
+              Play online
             </Link>
-            <Link className="btn" to="/bots">
+            <Link className="btn" to="/config?mode=dash">
+              Local quick match
+            </Link>
+            <Link className="btn btn-ghost" to="/bots">
               Challenge a bot
             </Link>
-            <button type="button" className="btn btn-ghost" onClick={playDaily}>
-              Today's puzzle
-            </button>
           </div>
           <div className="row small muted" style={{ marginTop: 14, gap: 14 }}>
             <span>{PUZZLES.length} puzzles</span>
             <span>·</span>
             <span>8 bot personalities</span>
             <span>·</span>
-            <span>Local play, no account needed</span>
+            <span>Global matchmaking + rooms</span>
           </div>
         </div>
         <div className="hero-side">
@@ -202,10 +202,11 @@ export function HomeScreen() {
       </section>
 
       <div className="banner gold">
-        <strong>Prototype status:</strong>
+        <strong>In this build:</strong>
         <span>
-          Phase C is live — local duels, bots, puzzles and clocks. Online ranked multiplayer, reactions and
-          subscriptions arrive in Phase B.
+          Local duels, eight bots, five puzzles and server-authoritative online play with global matchmaking
+          and private rooms. The online endpoint activates when the game server URL is configured.
+          Reactions, social features, subscriptions and analytics come next.
         </span>
       </div>
     </div>

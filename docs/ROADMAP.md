@@ -1,73 +1,76 @@
 # Roadmap
 
-Execution order is **C → B → D**. Phase C is complete; the milestones below are sequenced.
+Execution order is **C → B → D**, with the user's prioritisation of online play ahead of the original
+M2 content work.
 
 ## Phase C — done
 
 - [x] Deterministic engine: movement, jumps, barriers, reachability, route preservation, win/draw,
       history, undo, replay, serialisation.
-- [x] Local hotseat matches with per-player clocks and increments.
-- [x] Eight deterministic bot personalities.
-- [x] Five solo puzzles with budgets, hints and retry.
-- [x] Ten screens: home, modes, arena config, match, result, bots, puzzles, profile, leaderboard,
-      settings.
-- [x] Responsive SVG/CSS board, keyboard shortcuts, touch, reduced motion, non-colour indicators.
-- [x] Local persistence (refresh-safe), local Elo, XP, achievements, leaderboard.
-- [x] Engine, bot and web logic tests; production build; browser smoke verification.
+- [x] Local hotseat with clocks; eight deterministic bots; five puzzles.
+- [x] Twelve screens; responsive board; keyboard/touch/reduced-motion/non-colour indicators.
+- [x] Local persistence, Elo for bot games, XP, achievements, local leaderboard.
+- [x] Engine, bot and web logic tests; local browser smoke.
 
-## M2 — Phase B: mode identity, puzzles and coaching
+## Online multiplayer core — done and locally verified
 
-- Implement Survival waves and Chaos modifiers as engine-level rulesets (no forked engines).
-- Solver-backed puzzle content: minimum-move and limited-barrier objectives, validated solutions,
-  weekly sets, streak persistence, hints derived from search.
-- Deterministic coaching: turning points, missed wins, inefficient barriers, alternative legal moves.
-  Label every claim as proven or heuristic.
-- Tests: mode rulesets, puzzle solvability, coaching honesty.
+- [x] Fastify + WebSocket server; shared protocol package; modular hub.
+- [x] Guest identity with hashed tokens; duplicate-session protection.
+- [x] Global matchmaking by mode/clock with expanding Elo tolerance; queue cancellation.
+- [x] Public/private rooms, six-character codes, invite links, lobby listing.
+- [x] Server-authoritative moves, turns, clocks, increments and timeout.
+- [x] Resign, draw offer/agreement, rematch with swapped colours.
+- [x] 60-second reconnect window, opponent countdown, forfeit vs timeout vs abandonment.
+- [x] JSON persistence, restart recovery with paused clocks.
+- [x] Server-side Elo (K=24), idempotent settlement, online leaderboard.
+- [x] Origin allow-list, input validation, frame/HTTP rate limits, security headers.
+- [x] Two-browser Playwright smoke: rooms, invite link, moves, Elo, rematch, reconnect, global queue,
+      mobile layout.
+- [ ] **Deploy the game server to a persistent host and set `VITE_WS_URL`.** Blocked on hosting
+      credentials (Railway/Fly).
 
-## M3 — Phase B: authoritative multiplayer
+## Next — online production hardening
 
-- Fastify modular monolith: auth, WS gateway, match service, clock service, matchmaking, rating.
-- PostgreSQL schema and migrations: users, sessions, matches, match_players, match_moves,
-  match_events, results, ratings, rating_history.
-- Server-authoritative clocks, reconnect tokens, heartbeats, grace windows, duplicate-session
-  protection, idempotent results.
-- Matchmaking: casual/ranked, expanding Elo tolerance, cancellation, labelled bot fallback, private
-  rooms/invite codes, rematch.
-- Tests: duplicate/simultaneous moves, reconnect, timeout vs inactivity vs abandonment, server restart
-  recovery, rating.
+- [ ] PostgreSQL schema + migrations for players, matches, moves, events, ratings; transactional result
+      writes and replays.
+- [ ] Redis for distributed queues, rate limits and presence; multiple server replicas.
+- [ ] Accounts and guest linking (then social features can be built).
+- [ ] Matchmaking/load tests with measured concurrency and latency; document limits.
+- [ ] Anti-cheat/anti-collusion review; replay retention and match audit tools.
+- [ ] Spectator mode (hidden-state safe) and tournament scaffolding.
+- [ ] Server metrics/error monitoring, alerting, backup/restore drill.
 
-## M4 — Phase B: communication and social
+## M2 content (deferred, still planned)
 
-- Reaction catalogue (categories A–I), custom quick messages with filtering, cooldowns and reports.
-- Audio system: original voice/SFX packs, metadata, entitlements, volume channels, preloading, silence.
-- Friends, requests, presence privacy, blocks, reports, recent opponents, spectators, basic tournaments.
-- Tests: cooldown/rate limits, mute/block/report, invalid reaction ids, entitlement gating.
+- [ ] Survival waves and Chaos modifiers as engine-level rulesets.
+- [ ] Solver-backed tactics, weekly puzzle sets, puzzle streaks.
+- [ ] Deterministic post-match coaching with proven/heuristic labels.
 
-## M5 — Phase B: monetisation, progression and admin
+## M4 — communication and social
 
-- Central entitlement service; configurable plans (Free/Plus ₹99/Pro ₹199/Elite ₹399 hypotheses).
-- Razorpay checkout + verified webhooks, idempotency, cancellation, refunds, grace periods,
-  restoration, revocation; safe test-mode fallback.
-- Cosmetic store (themes, pieces, barriers, frames, avatars, reaction animations, sound packs).
-- Seasons, missions, achievements with server-validated, non-repeatable reward claims.
-- Global/friends/weekly/seasonal leaderboards with seasonal resets that preserve history.
-- Admin dashboard with RBAC, audit logs, moderation actions, feature flags and anti-cheat signals.
-- Tests: verified/invalid purchases, duplicate webhooks, cancellation, expiry, restoration, claims.
+- [ ] Reaction catalogue (categories A–I), custom quick messages, server cooldowns and reports.
+- [ ] Original voice/SFX packs, volume channels, preloading, entitlement gating.
+- [ ] Friends, requests, presence privacy, blocking, reporting, recent opponents.
+- [ ] Tournaments/spectating productionised.
 
-## M6 — Phase D: analytics, hardening, launch
+## M5 — monetisation, progression and admin
 
-- Event outbox and schema-versioned analytics events; heartbeat-based playtime intervals; aggregate
-  and retention pipelines.
-- Admin Analytics Command Center (`/admin/analytics`) with Executive Overview, Registrations, User
-  Directory + CSV, per-player analytics, real-time monitor, playtime, retention cohorts, game
-  performance, messaging, revenue and technical health; metric dictionary.
-- Player Insights (`/profile/stats`) with privacy controls and own-data-only authorisation.
-- Load tests, SLOs, backups/restore drill, monitoring/alerting, staging billing verification,
-  production-readiness checklist, rollback runbook.
-- Native packaging (Capacitor/TWA) and store billing requirements if pursued.
+- [ ] Central entitlement service; configurable plans (₹99/₹199/₹399 hypotheses).
+- [ ] Razorpay checkout, verified/idempotent webhooks, cancellation, refund, restoration.
+- [ ] Cosmetics store; seasons, missions, server-validated rewards.
+- [ ] Admin dashboard with RBAC, audit logs, moderation, anti-cheat signals.
 
-## Explicit non-goals for now
+## M6 — Phase D
+
+- [ ] Analytics event pipeline and playtime intervals.
+- [ ] Admin Analytics Command Center (executive, registrations, directory, realtime, retention, game,
+      messaging, revenue, technical health) with metric dictionary.
+- [ ] Player insights dashboard with privacy controls.
+- [ ] Load tests, SLOs, backups/restore, staging billing verification, production checklist, native
+      packaging documentation.
+
+## Non-goals for now
 
 - No fabricated online opponents. Bot games are always labelled.
-- No simulated payments. Development billing is off until a verified provider flow exists.
-- No claim of concurrency capacity without load-test evidence.
+- No simulated payments. Billing remains off until verified end-to-end.
+- No concurrency claims without load-test evidence.

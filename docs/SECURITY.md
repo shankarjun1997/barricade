@@ -1,56 +1,66 @@
 # Security model
 
-## Phase C (current)
+## Current build (local + authoritative online server)
 
-Phase C is a local, offline-capable prototype. There is no server, no authentication, no payments and
-no telemetry.
+### Game authority
 
-- **Trust boundary:** everything runs in the player's browser. The engine is deterministic and pure;
-  the UI only requests moves and renders the result. A player modifying `localStorage` can only cheat
-  their own local profile — there is no competitive server to deceive.
-- **No secrets in the client:** no API keys, payment secrets, database URLs or tokens are bundled. The
-  Razorpay test credential in the repo's git-ignored `.env.local` is not referenced by the web build.
-- **Injection:** React escapes rendered strings by default. Player names are validated (length and
-  allowed characters) and never interpolated into HTML. There is no `dangerouslySetInnerHTML`.
-- **Storage:** `localStorage` data is validated on load (config bounds, pawn positions); invalid saved
-  matches are discarded instead of being trusted.
-- **Audio:** WebAudio is created only after a user gesture; nothing autoplays.
-- **Headers:** the Vercel deployment sends CSP (self-only scripts, inline styles allowed), HSTS via
-  Vercel, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive
-  `Permissions-Policy`.
-- **Dependencies:** production bundle has no server or payment SDK. `npm audit` reports 0
-  vulnerabilities; Vitest was upgraded past the affected versions.
+- The server loads the same deterministic engine as the client and validates every move.
+- Clients submit intents only. They cannot set clocks, results, ratings or colours.
+- Clocks run on the server; expiry, reconnect deadlines and forfeits are evaluated server-side.
+- Duplicate move submissions are idempotent via `clientMoveId`; results settle exactly once.
+- A second socket for one player replaces the first (close code 4001), preventing two devices from
+  controlling the same seat.
 
-## Phase B/D (required before online launch)
+### Identity and secrets
 
-The following are design requirements, not current claims:
+- Online guests are a random id plus a server-issued 32-byte token.
+- Only the SHA-256 token hash is persisted. Reconnects must present the matching token.
+- Lost browser storage means the guest identity/rating cannot be recovered; the lobby can create a new
+  guest identity. Accounts and recovery are a later milestone.
+- No passwords, emails, payment data or analytics identifiers are collected in this build.
+- Browser bundle contains no server secrets. Razorpay keys live only in the git-ignored `.env.local`
+  and are unused until billing is implemented.
 
-1. **Server authority.** The server creates matches, validates every move with `@barricade/engine`,
-   owns clocks, prevents duplicate submissions, records canonical events, decides results and rating
-   changes. Clients are never trusted for legality, time, outcome or entitlement.
-2. **Authentication.** Password hashing with Argon2/bcrypt, secure session cookies (HttpOnly, Secure,
-   SameSite), CSRF protection, token rotation, logout-all, account linking with conflict checks,
-   enumeration-resistant recovery flows, rate limiting and optional MFA for admins.
-3. **Authorisation.** Role-based access control enforced server-side for admin analytics and
-   moderation. Hiding navigation is never sufficient. Every sensitive action is audited.
-4. **Input validation.** Schema validation at every boundary, parameterised SQL via the ORM, upload
-   limits, bounded pagination and date ranges, and request size limits.
-5. **Rate limiting & abuse.** Per-account and per-IP limits on auth, reactions, friend requests,
-   matchmaking, reports and exports. Message cooldowns are server-enforced; premium tiers never bypass
-   moderation limits.
-6. **Payment integrity.** Razorpay checkout is untrusted UI. Entitlements change only after
-   server-side signature verification and idempotent webhook processing. Raw card data never touches
-   the server. Secrets stay server-side. Test mode until staging verification passes.
-7. **Transport & headers.** HTTPS/HSTS, CSP, `X-Content-Type-Options`, `Referrer-Policy`,
-   `Permissions-Policy`, strict CORS. WebSocket origin checks and per-connection authentication.
-8. **Data protection.** Minimal collection, documented retention, encrypted backups, account export
-   and deletion, no precise location or device fingerprinting, and aggregate analytics by default.
-9. **Operations.** Structured logs without secrets, error monitoring, alerting, dependency updates,
-   secret rotation and a tested restore procedure.
-10. **Fairness.** Ranked rulesets are fixed and validated. Purchases affect cosmetics only, never moves,
-    barrier stock, clocks, matchmaking or rating.
+### Input, transport and abuse controls
+
+- Zod validation on every WebSocket frame; invalid shapes are rejected before the hub.
+- WebSocket payload limit 64 KiB; 80 messages/second per connection; HTTP rate limit per IP.
+- Browser origin allow-list (`ALLOWED_ORIGINS`) enforced before the WebSocket upgrade completes.
+- CORS restricted on HTTP endpoints; no credentials are sent.
+- Display names are length/charset validated. No chat exists, so there is no free-text moderation
+  surface yet.
+- Static web deployment sends CSP (scripts self-only, WebSocket `ws:`/`wss:` only), HSTS via Vercel,
+  `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy` and `Permissions-Policy`.
+- Server logs do not include tokens or message payloads; Fastify redacts authorisation/cookie headers.
+
+### Persistence and retention
+
+- Guests, ratings, rooms and matches are stored in a JSON file on the server (`DATA_FILE`). Writes are
+  atomic and flushed on shutdown.
+- Finished matches are retained in memory/JSON for 30 minutes for results and rematches. The JSON file
+  itself retains players/rooms/matches until manually pruned; a retention job is required before
+  production scale.
+- Back up `/data/state.json` before deploys. Do not run multiple server replicas against it.
+
+## Required before public scale
+
+1. **Accounts:** audited authentication, password hashing (Argon2), session rotation, recovery,
+   account export/deletion, guest linking with conflict checks.
+2. **PostgreSQL/Redis:** transactional match/event storage, idempotent result writes, distributed rate
+   limits and queues; no single-writer JSON in production.
+3. **Moderation:** report/block/mute, name and custom-message filters, admin RBAC with audit logs,
+   appeals and anti-abuse thresholds.
+4. **Payments:** server-side Razorpay signature verification, idempotent webhooks, entitlement
+   restoration, cancellation/refund handling, test-mode staging verification. Never trust a redirect.
+5. **Operational security:** structured error monitoring, alerting, backup/restore drills, dependency
+   scanning, secret rotation, load tests and DDoS/rate-limit tuning.
+6. **Distributed fairness:** anti-collusion/rating-manipulation analysis, replay retention, spectator
+   state isolation.
+7. **Privacy:** documented retention for match and (future) chat records, cookie policy, regional
+   data-protection review.
 
 ## Reporting
 
-This is a local prototype without a production endpoint. When deployed, add a security contact and a
-responsible-disclosure policy before enabling accounts or payments.
+Add a security contact and responsible-disclosure policy before enabling accounts or payments. No
+production endpoint has been claimed until the hosted server and its verification steps in
+`docs/DEPLOYMENT.md` are complete.

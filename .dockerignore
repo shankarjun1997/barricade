@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.gitignore
+artifacts
+data
+coverage
+.vercel
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example

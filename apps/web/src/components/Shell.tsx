@@ -31,11 +31,12 @@ function GearIcon() {
 }
 
 const NAV = [
-  { to: '/', label: 'Home', glyph: 'H', end: true },
-  { to: '/play', label: 'Play', glyph: 'P' },
-  { to: '/puzzles', label: 'Puzzles', glyph: '?' },
-  { to: '/leaderboard', label: 'Ranks', glyph: 'R' },
-  { to: '/profile', label: 'Profile', glyph: 'Me' },
+  { to: '/', label: 'Home', short: 'Home', glyph: 'H', end: true },
+  { to: '/play', label: 'Play', short: 'Play', glyph: 'P' },
+  { to: '/online', label: 'Online', short: 'Online', glyph: 'O' },
+  { to: '/puzzles', label: 'Puzzles', short: 'Puzzles', glyph: '?' },
+  { to: '/leaderboard', label: 'Ranks', short: 'Ranks', glyph: 'R' },
+  { to: '/profile', label: 'Profile', short: 'Me', glyph: 'Me' },
 ];
 
 export function Shell() {
@@ -86,7 +87,7 @@ export function Shell() {
             <span className="nav-glyph" aria-hidden="true">
               {item.glyph}
             </span>
-            {item.label}
+            {item.short}
           </NavLink>
         ))}
       </nav>

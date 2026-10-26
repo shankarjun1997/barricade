@@ -105,7 +105,7 @@ try {
 
   await page.getByRole('button', { name: 'Move to E2' }).click();
   await page.getByRole('button', { name: 'Move to E8' }).click();
-  assert.match(await page.locator('.pill', { hasText: 'plies' }).textContent(), /2 plies/);
+  await page.getByText('2 plies').waitFor();
 
   await page.keyboard.press('w');
   const slots = page.locator('.wall-slot');
@@ -135,7 +135,7 @@ try {
   await page.getByRole('button', { name: 'Move to E2' }).click();
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
-  assert.match(await page.locator('.pill', { hasText: 'plies' }).textContent(), /1 plies/);
+  await page.getByText('1 ply').waitFor();
 
   step('Bot match');
   await page.goto(base + '/bots', { waitUntil: 'networkidle' });

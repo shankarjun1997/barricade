@@ -1,74 +1,113 @@
 # Deployment
 
-## Current (Phase C) — static web client on Vercel
+## Current status
 
-The client is a static SPA. Production hosting is Vercel, team `builder-os`.
+| Component | Host | Status |
+| --- | --- | --- |
+| Web client | Vercel, team `builder-os`, project `barricade` | Live: https://barricade-ruby.vercel.app |
+| Game server | Railway (Dockerfile) | Deploy-ready; hosting credentials pending |
+| Online production | `VITE_WS_URL` on Vercel | Pending server deployment |
 
-- Project: `barricade` (`prj_808mfFcHvj6xLJKuGBGG50U2bNfi`)
-- Production URL: https://barricade-ruby.vercel.app
-- Project alias: https://barricade-builder-os.vercel.app
-- Build: Vite from the monorepo root (`npm run build -w @barricade/web` → `apps/web/dist`)
-- GitHub: `shankarjun1997/barricade` (`main`), auto-deploy enabled
-- Vercel Authentication (SSO protection) disabled so the game is publicly playable.
+The deployed web app currently shows an honest "online server not configured" screen. Local matches,
+bots and puzzles work in production. Once the game server is deployed, set `VITE_WS_URL` and redeploy.
+
+## Web client (Vercel)
+
+- Project id `prj_808mfFcHvj6xLJKuGBGG50U2bNfi`
+- Production alias `https://barricade-ruby.vercel.app` (project alias
+  `https://barricade-builder-os.vercel.app`)
+- Git auto-deploy from `shankarjun1997/barricade` `main` is enabled and verified.
+- Build: `npm install` → `npm run build -w @barricade/web`, output `apps/web/dist`, Node 22.x.
+- SPA rewrite and security headers live in the root `vercel.json`.
+- Deployment Protection is disabled so the game is publicly playable.
+
+Manual deploy fallback:
 
 ```bash
-npm install
-npm run verify        # typecheck + tests + build
-npm run build         # outputs apps/web/dist
-```
-
-Automatic: pushing to `main` triggers a Vercel build from the repository.
-
-Manual fallback (verified working):
-
-```bash
+npm run verify
 cd apps/web/dist
 vercel deploy --prod --yes --name barricade --scope builder-os
 ```
 
-The `vercel.json` inside the deployed folder rewrites all routes to `index.html` so deep links such as
-`/match` and `/settings` work. A root `vercel.json` is also present so the same project can later build
-from the monorepo root (`buildCommand: npm run build -w @barricade/web`,
-`outputDirectory: apps/web/dist`).
+## Game server (Railway, recommended)
 
-### Rollback
+The repository includes a root `Dockerfile` and `railway.json`.
 
-Vercel keeps immutable deployments. In the dashboard, open the project → Deployments → select the last
-known-good deployment → **Promote to Production**. Alternatively redeploy a previous git commit with the
-CLI. No database state is involved in Phase C, so rollback is stateless.
+1. Create a Railway project from `shankarjun1997/barricade`. Railway should detect `railway.json` and
+   build the root Dockerfile. The image bundles the engine/protocol workspaces; runtime listens on
+   `$PORT` (Docker default 8080).
+2. Add a **volume** mounted at `/data`.
+3. Set service variables:
 
-### Post-deploy checks (verified for Phase C)
+   ```bash
+   NODE_ENV=production
+   DATA_FILE=/data/state.json
+   ALLOWED_ORIGINS=https://barricade-ruby.vercel.app,https://barricade-builder-os.vercel.app
+   RECONNECT_GRACE_MS=60000
+   LOG_LEVEL=info
+   ```
 
-1. `https://barricade-ruby.vercel.app/` returns 200.
-2. Deep links (`/match`, `/result`, `/settings`) return the app shell (SPA rewrite).
-3. Home → Quick match → move → barrier → undo → resign → result works in real Chrome.
-4. No console errors; no horizontal scrolling at 390 px.
-5. Security headers present (`CSP`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`).
-6. Git-triggered production builds reach READY (verified on commits `12a0a9c`, `d9b4fa9`).
+   `PORT` is provided by Railway. Do not run more than one replica: the JSON store is single-writer.
+4. Generate a public domain. Verify:
+   - `GET https://<server>/health` returns `{ ok: true, ... }`
+   - `GET https://<server>/api/lobby` returns counts and an empty leaderboard
+   - WebSocket upgrade works from the Vercel origin (the origin allow-list is enforced).
+5. In Vercel → project `barricade` → Settings → Environment Variables (Production), add:
 
-## Future (Phase B) — frontend + real-time backend
+   ```bash
+   VITE_WS_URL=wss://<server-domain>/ws
+   ```
 
-WebSockets cannot run on Vercel serverless. The planned split:
+   Redeploy the web project (env changes are baked at build time).
+6. Verify with two browsers: create a room in one, open the invite link in the other, play moves, resign,
+   rematch, and reload one tab to confirm reconnection.
 
-| Component | Host |
-| --- | --- |
-| Web client (`apps/web`) | Vercel, team builder-os |
-| Game server (`apps/server`, Fastify + WS) | Railway (persistent container) |
-| PostgreSQL | Railway Postgres (Prisma migrations) |
-| Redis (matchmaking, rate limits, presence) | Railway Redis |
-| Audio/cosmetic assets | Object storage + CDN (later) |
+### Railpack/Nixpacks alternative
 
-Staging should be a separate Railway environment and a separate Vercel preview project, using test
-payment credentials only. Production payments stay disabled until webhook verification, cancellation,
-refund and entitlement restoration are verified end-to-end on staging.
+If Railway builds without Docker, set the build command to `npm run server:build`, start command to
+`node apps/server/dist/index.js`, and keep the same environment variables and `/data` volume. The Docker
+path is the verified reference.
 
-### Migration procedure (planned)
+## Game server (Fly.io alternative)
 
-1. Run `prisma migrate deploy` against staging.
-2. Run integration tests (match, clock, reconnect, billing webhooks).
-3. Snapshot production database.
-4. Apply migrations to production during a maintenance window.
-5. Smoke test, then promote the frontend.
+The Fly CLI is installed on this machine but not authenticated.
 
-Do not run destructive database operations against production. No deployment is claimed before it
-actually succeeds and is verified.
+```bash
+fly launch --no-deploy --name barricade-online --region sin
+fly volumes create barricade_data --size 1 --region sin
+# mount barricade_data at /data in fly.toml; set the same env vars
+fly deploy
+```
+
+Use `wss://<app>.fly.dev/ws` as `VITE_WS_URL`.
+
+## Staging
+
+Use a separate Railway service/environment and a Vercel preview build:
+
+- Staging server: separate `DATA_FILE`, `ALLOWED_ORIGINS` including the preview URL.
+- Staging web: preview deployment with `VITE_WS_URL` pointing at the staging server.
+- Run the online smoke flow against staging before promoting.
+- Payments remain disabled and no real Razorpay keys are used.
+
+## Rollback
+
+- **Web:** Vercel → Deployments → select the last known-good deployment → Promote to Production. The
+  client is stateless; no data migration is involved.
+- **Server:** Railway → Deployments → redeploy the previous image. Before a deploy, copy
+  `/data/state.json` (volume snapshot/backup). If the JSON file is corrupt, the server starts with an
+  empty store rather than crashing; restore the backup to retain ratings.
+- Active matches survive a normal restart; clocks pause during downtime and a fresh reconnect window is
+  granted.
+
+## Post-deploy checks
+
+1. Web home and deep links return 200; no console errors; 390 px has no horizontal scrolling.
+2. `GET /health` and `/api/lobby` on the server return 200.
+3. WebSocket connects from the production origin only (evil origin rejected with close code 1008).
+4. Two real browsers complete a room match and a global matchmaking match.
+5. Resignation updates both ratings exactly once; rematch swaps colours.
+6. Reload during a match reconnects within 60 seconds; expiry produces a forfeit.
+7. Restart the server mid-match; both clients reconnect and clocks resume without draining downtime.
+
+No deployment is claimed as complete until these checks pass against the real URL.

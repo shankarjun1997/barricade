@@ -15,7 +15,8 @@
     "@barricade/engine": "*",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.4"
+    "react-router-dom": "^7.9.4",
+    "@barricade/protocol": "*"
   },
   "devDependencies": {
     "@types/react": "^19.1.16",

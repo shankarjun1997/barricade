@@ -11,11 +11,16 @@
     "dev": "npm run dev -w @barricade/web",
     "build": "npm run build -w @barricade/web",
     "preview": "npm run preview -w @barricade/web",
-    "test": "npm run test -w @barricade/engine && npm run test -w @barricade/bots && npm run test -w @barricade/web",
-    "typecheck": "npm run typecheck -w @barricade/engine && npm run typecheck -w @barricade/bots && npm run typecheck -w @barricade/web",
+    "test": "npm run test -w @barricade/engine && npm run test -w @barricade/bots && npm run test -w @barricade/web && npm run test -w @barricade/server",
+    "typecheck": "npm run typecheck -w @barricade/engine && npm run typecheck -w @barricade/bots && npm run typecheck -w @barricade/protocol && npm run typecheck -w @barricade/server && npm run typecheck -w @barricade/web",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
     "smoke": "node scripts/smoke.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "server:dev": "npm run dev -w @barricade/server",
+    "server:build": "npm run build -w @barricade/server",
+    "server:start": "npm run start -w @barricade/server",
+    "server:test": "npm run test -w @barricade/server",
+    "smoke:online": "node scripts/online-smoke.mjs"
   },
   "engines": {
     "node": ">=20",

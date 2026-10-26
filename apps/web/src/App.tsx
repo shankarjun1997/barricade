@@ -11,6 +11,8 @@ import { PuzzlesScreen } from './screens/PuzzlesScreen.js';
 import { ProfileScreen } from './screens/ProfileScreen.js';
 import { LeaderboardScreen } from './screens/LeaderboardScreen.js';
 import { SettingsScreen } from './screens/SettingsScreen.js';
+import { OnlineLobbyScreen } from './screens/OnlineLobbyScreen.js';
+import { OnlineMatchScreen } from './screens/OnlineMatchScreen.js';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -47,6 +49,8 @@ export function App() {
           <Route path="result" element={<ResultScreen />} />
           <Route path="bots" element={<BotSelectScreen />} />
           <Route path="puzzles" element={<PuzzlesScreen />} />
+          <Route path="online" element={<OnlineLobbyScreen />} />
+          <Route path="online/match" element={<OnlineMatchScreen />} />
           <Route path="profile" element={<ProfileScreen />} />
           <Route path="leaderboard" element={<LeaderboardScreen />} />
           <Route path="settings" element={<SettingsScreen />} />
@@ -56,3 +60,4 @@ export function App() {
     </>
   );
 }
+

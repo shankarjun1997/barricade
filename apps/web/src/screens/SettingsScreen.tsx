@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../state/AppContext.js';
 import { Modal } from '../components/Modal.js';
 import { loadMatch } from '../lib/match.js';
 import { loadLastResult } from '../lib/settle.js';
 import { removeKey } from '../lib/storage.js';
+import { useOnline } from '../online/OnlineProvider.js';
 
 export function SettingsScreen() {
   const { profile, settings, updateSettings, resetProgress, sfx, toast } = useApp();
+  const online = useOnline();
   const [confirmReset, setConfirmReset] = useState(false);
 
   const exportData = () => {
@@ -163,6 +166,30 @@ export function SettingsScreen() {
           </div>
         </section>
       </div>
+
+      <section className="card">
+        <div className="card-title">Online play</div>
+        <div className="row-between small">
+          <span className="muted">Game server</span>
+          <span className="mono tiny">{online.serverUrl ?? 'not configured (local prototype)'}</span>
+        </div>
+        <div className="row-between small" style={{ marginTop: 6 }}>
+          <span className="muted">Status</span>
+          <span>{online.configured ? online.status : 'offline only'}</span>
+        </div>
+        <div className="row-between small" style={{ marginTop: 6 }}>
+          <span className="muted">Guest identity</span>
+          <span className="mono tiny">{online.identity.playerId}</span>
+        </div>
+        <div className="btn-row" style={{ marginTop: 10 }}>
+          <Link className="btn btn-sm btn-primary" to="/online">Open online lobby</Link>
+        </div>
+        <div className="divider" />
+        <div className="tiny dim">
+          Online clocks, moves, forfeits and ratings are server-authoritative. Guest tokens are stored in this
+          browser; no passwords or payment data are used in this build.
+        </div>
+      </section>
 
       <section className="card">
         <div className="card-title">About Barricade</div>
