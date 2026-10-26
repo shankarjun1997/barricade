@@ -4,7 +4,7 @@
 
 | Item | Cost |
 | --- | --- |
-| Vercel static hosting (Hobby/team) | ₹0 on the existing plan |
+| Vercel static hosting (Hobby/team `builder-os`) | ₹0 — live at https://barricade-ruby.vercel.app |
 | Build/test compute | Local; ~1–2 minutes per verify |
 | Database/Redis | None |
 | Payments | None (test keys unused) |

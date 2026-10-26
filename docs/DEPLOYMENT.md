@@ -4,13 +4,22 @@
 
 The client is a static SPA. Production hosting is Vercel, team `builder-os`.
 
+- Project: `barricade` (`prj_808mfFcHvj6xLJKuGBGG50U2bNfi`)
+- Production URL: https://barricade-ruby.vercel.app
+- Project alias: https://barricade-builder-os.vercel.app
+- Build: Vite from the monorepo root (`npm run build -w @barricade/web` → `apps/web/dist`)
+- GitHub: `shankarjun1997/barricade` (`main`), auto-deploy enabled
+- Vercel Authentication (SSO protection) disabled so the game is publicly playable.
+
 ```bash
 npm install
 npm run verify        # typecheck + tests + build
 npm run build         # outputs apps/web/dist
 ```
 
-Deploy the built output:
+Automatic: pushing to `main` triggers a Vercel build from the repository.
+
+Manual fallback (verified working):
 
 ```bash
 cd apps/web/dist

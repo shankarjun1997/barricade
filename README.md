@@ -3,6 +3,8 @@
 A competitive grid-duel game — race your piece to the far side while placing barriers to bend your
 rival's route.
 
+**Live:** https://barricade-ruby.vercel.app
+
 **Status: Phase C prototype — playable.** Local duels, eight bots, five puzzles, full clocks and
 persistence. Online multiplayer, reactions and subscriptions are Phase B (see the roadmap).
 
