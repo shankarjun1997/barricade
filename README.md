@@ -119,7 +119,8 @@ npm run smoke   # real Chrome drives the production build (requires Chrome; buil
 
 The smoke flow covers: home → local match → barrier placement with a real pointer → undo → resign →
 result → rematch → refresh restore → bot match → puzzle solve → settings → mobile layout. It checks for
-console errors and horizontal overflow at 390 px.
+console errors and horizontal overflow at 390 px. The same flow was also verified against the live
+production deployment.
 
 ## Data and privacy
 

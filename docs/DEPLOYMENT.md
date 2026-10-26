@@ -37,12 +37,14 @@ Vercel keeps immutable deployments. In the dashboard, open the project → Deplo
 known-good deployment → **Promote to Production**. Alternatively redeploy a previous git commit with the
 CLI. No database state is involved in Phase C, so rollback is stateless.
 
-### Post-deploy checks
+### Post-deploy checks (verified for Phase C)
 
-1. `curl -I https://<domain>/` returns 200.
-2. Deep link `/<domain>/match` returns the app shell.
-3. Home → Quick match → move → resign → result works.
-4. Browser console has no errors; mobile 390 px has no horizontal scrolling.
+1. `https://barricade-ruby.vercel.app/` returns 200.
+2. Deep links (`/match`, `/result`, `/settings`) return the app shell (SPA rewrite).
+3. Home → Quick match → move → barrier → undo → resign → result works in real Chrome.
+4. No console errors; no horizontal scrolling at 390 px.
+5. Security headers present (`CSP`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`).
+6. Git-triggered production builds reach READY (verified on commits `12a0a9c`, `d9b4fa9`).
 
 ## Future (Phase B) — frontend + real-time backend
 

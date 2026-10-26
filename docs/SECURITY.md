@@ -15,8 +15,11 @@ no telemetry.
 - **Storage:** `localStorage` data is validated on load (config bounds, pawn positions); invalid saved
   matches are discarded instead of being trusted.
 - **Audio:** WebAudio is created only after a user gesture; nothing autoplays.
-- **Dependencies:** production bundle has no server or payment SDK. Run `npm audit` and keep tooling
-  current.
+- **Headers:** the Vercel deployment sends CSP (self-only scripts, inline styles allowed), HSTS via
+  Vercel, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy` and a restrictive
+  `Permissions-Policy`.
+- **Dependencies:** production bundle has no server or payment SDK. `npm audit` reports 0
+  vulnerabilities; Vitest was upgraded past the affected versions.
 
 ## Phase B/D (required before online launch)
 
