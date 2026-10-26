@@ -1,0 +1,13 @@
+{
+  "name": "Barricade — Grid Duel",
+  "short_name": "Barricade",
+  "description": "A competitive grid-duel. Race to the far side, place barriers, outthink your rival.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f1216",
+  "theme_color": "#0f1216",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "barricade",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Barricade \u2014 a competitive grid-duel game platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @barricade/web",
+    "build": "npm run build -w @barricade/web",
+    "preview": "npm run preview -w @barricade/web",
+    "test": "npm run test -w @barricade/engine && npm run test -w @barricade/bots && npm run test -w @barricade/web",
+    "typecheck": "npm run typecheck -w @barricade/engine && npm run typecheck -w @barricade/bots && npm run typecheck -w @barricade/web",
+    "verify": "npm run typecheck && npm test && npm run build",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}
