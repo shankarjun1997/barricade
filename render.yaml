@@ -1,0 +1,28 @@
+# Render Blueprint for the authoritative Barricade game server.
+#
+# Free plan notes:
+#   - Render free web services sleep after inactivity. The first visit can take up to a minute.
+#   - The free tier has no persistent disk. DATA_FILE points at /tmp, so ratings/history reset when the
+#     instance sleeps or redeploys. Upgrade to a paid instance + disk (or move to Postgres) for durable
+#     records. This is a demo deployment, not production.
+services:
+  - type: web
+    name: barricade-online
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_FILE
+        value: /tmp/barricade-state.json
+      - key: ALLOWED_ORIGINS
+        value: https://barricade-ruby.vercel.app,https://barricade-builder-os.vercel.app
+      - key: RECONNECT_GRACE_MS
+        value: "60000"
+      - key: LOG_LEVEL
+        value: info

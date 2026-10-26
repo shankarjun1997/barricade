@@ -4,9 +4,9 @@ A competitive grid-duel game — race your piece to the far side while placing b
 rival's route.
 
 **Web app:** https://barricade-ruby.vercel.app
-**Game server:** implemented and verified locally; the production endpoint is pending hosting
-credentials (see `docs/BLOCKERS.md`). Until `VITE_WS_URL` is set, `/online` shows an honest setup screen
-and the rest of the game remains fully playable.
+**Game server:** implemented, Docker-verified and deploy-ready; the production endpoint is pending a
+Render account/API key (see `docs/BLOCKERS.md`). Until `VITE_WS_URL` is set, `/online` shows an honest
+setup screen and the rest of the game remains fully playable.
 
 This is an original product: original name, branding, interface, implementation and synthesized audio.
 The rules are a public abstract duel; no third-party assets or code are used.
@@ -162,9 +162,10 @@ console errors and no horizontal overflow at 390 px.
 - Local profile, settings, active local match and results live in `localStorage`.
 - Online guests get a random id and token; the server stores the token **hash**, display name, rating and
   W/L/D record. No email, password, payment data or analytics are collected in this build.
-- Online state is stored in a JSON file (`DATA_FILE`, default `./data/state.json`). It survives server
-  restarts and pauses clocks during downtime. A single writer is assumed; horizontal scaling needs
-  PostgreSQL/Redis (see roadmap).
+- Online state is stored in a JSON file (`DATA_FILE`, default `./data/state.json`). It survives normal
+  restarts and pauses clocks during downtime. **On Render Free it lives in `/tmp` and resets when the
+  free instance sleeps or redeploys**, so ratings/leaderboard are demo-only until a paid disk or
+  PostgreSQL is introduced. A single writer is assumed; horizontal scaling needs PostgreSQL/Redis.
 - Settings includes local data export/reset. The online lobby includes a new-guest-identity action.
 
 ## Deployment
@@ -172,12 +173,14 @@ console errors and no horizontal overflow at 390 px.
 | Piece | Host | Status |
 | --- | --- | --- |
 | Web client | Vercel, team `builder-os` | Live at https://barricade-ruby.vercel.app |
-| Game server | Railway (Dockerfile + `railway.json`) | Deploy-ready; credentials pending |
-| Persistence | Railway volume mounted at `/data` | Planned |
+| Game server | Render Free Blueprint (`render.yaml` + Dockerfile) | Deploy-ready; account/API key pending |
+| Persistence | JSON file | **Render Free:** `/tmp` (resets on sleep/redeploy); paid disk/Postgres needed for durable ratings |
 | Payments | Razorpay test keys in git-ignored `.env.local` | Not wired yet; billing stays off |
 
 After the server is deployed, set `VITE_WS_URL=wss://<server-host>/ws` on Vercel and redeploy. The server
-must allow the web origin via `ALLOWED_ORIGINS`. Full steps: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+must allow the web origin via `ALLOWED_ORIGINS`. Render Free sleeps when idle and has no persistent
+disk, so set `VITE_SERVER_NOTICE` to disclose that ratings may reset. Full steps:
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Documentation
 

@@ -118,9 +118,11 @@ smooth display, but the server is the only authority on expiry.
 - matches: engine state, move history, clocks, turn timestamp, result, rating changes, last move ids.
 
 Writes are atomic (temp file + rename), debounced by 400 ms and flushed on `SIGTERM`. In containers the
-file must live on a persistent volume (Railway: mount at `/data`). This is deliberately a single-writer
-store; horizontal scaling needs PostgreSQL + Redis (see roadmap). Match/queue state is small for early
-use, but no capacity claim is made without load tests.
+file must live on a persistent volume. **Render Free has no disk**, so the Blueprint sets
+`DATA_FILE=/tmp/barricade-state.json`; ratings/records reset when the instance sleeps or redeploys, and
+active matches do not survive a spin-down. Use a paid disk or PostgreSQL for durable records. This is
+deliberately a single-writer store; horizontal scaling needs PostgreSQL + Redis (see roadmap).
+Match/queue state is small for early use, but no capacity claim is made without load tests.
 
 ## Security controls in this phase
 

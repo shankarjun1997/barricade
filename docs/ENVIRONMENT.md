@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | `VITE_WS_URL` | For online play | WebSocket URL of the game server, e.g. `wss://barricade-server.up.railway.app/ws`. If empty in local development, the client falls back to `ws://localhost:8787/ws`. In production an empty value disables online play with an explicit setup screen. |
 | `VITE_API_URL` | No | Reserved for future HTTP APIs. |
+| `VITE_SERVER_NOTICE` | No | Optional banner text in the online lobby. Use it to disclose free-tier limitations (sleep, non-durable ratings). |
 | `VITE_RAZORPAY_KEY_ID` | No | Future public Razorpay key id. Never place a key secret in a `VITE_*` variable. |
 
 `VITE_*` values are baked into the build. After changing them on Vercel, redeploy.

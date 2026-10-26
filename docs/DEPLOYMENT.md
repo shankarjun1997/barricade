@@ -5,8 +5,8 @@
 | Component | Host | Status |
 | --- | --- | --- |
 | Web client | Vercel, team `builder-os`, project `barricade` | Live: https://barricade-ruby.vercel.app |
-| Game server | Railway (Dockerfile) | Deploy-ready; hosting credentials pending |
-| Online production | `VITE_WS_URL` on Vercel | Pending server deployment |
+| Game server | Render Free Blueprint (`render.yaml`) | Deploy-ready; user's Render account/API key pending |
+| Online production | `VITE_WS_URL` + `VITE_SERVER_NOTICE` on Vercel | Pending server deployment |
 
 The deployed web app currently shows an honest "online server not configured" screen. Local matches,
 bots and puzzles work in production. Once the game server is deployed, set `VITE_WS_URL` and redeploy.
@@ -29,7 +29,47 @@ cd apps/web/dist
 vercel deploy --prod --yes --name barricade --scope builder-os
 ```
 
-## Game server (Railway, recommended)
+## Game server (Render Free — selected)
+
+The repository includes a Render Blueprint (`render.yaml`) and a root `Dockerfile`.
+
+### Option A — Dashboard Blueprint (no API key)
+
+1. Sign in at https://render.com with GitHub.
+2. **New +** → **Blueprint** → connect `shankarjun1997/barricade` → apply the detected `render.yaml`.
+3. Render creates one Docker web service (`barricade-online`, Singapore, free plan) with the env vars:
+   `NODE_ENV`, `DATA_FILE=/tmp/barricade-state.json`, `ALLOWED_ORIGINS`, `RECONNECT_GRACE_MS`, `LOG_LEVEL`.
+4. Wait for the deploy and confirm `https://<service>.onrender.com/health` returns `{ ok: true }`.
+5. In Vercel → project `barricade` → Environment Variables (Production):
+
+   ```bash
+   VITE_WS_URL=wss://<service>.onrender.com/ws
+   VITE_SERVER_NOTICE=Demo server on Render Free: it sleeps when idle and ratings may reset after a restart.
+   ```
+
+   Redeploy the web project.
+6. Open the production site in two browsers, create a room in one and join via the invite link in the
+   other; play, resign, rematch, and reload to confirm reconnect.
+
+### Option B — Render API key
+
+Paste a Render API key and the service can be created/configured via
+`POST https://api.render.com/v1/services` with `type=web_service`, `env=docker`, `plan=free`,
+`region=singapore`, `healthCheckPath=/health`, `dockerfilePath=./Dockerfile`, `dockerContext=.`, and the
+env vars above. Then set the Vercel variables and redeploy.
+
+### Render Free caveats (important)
+
+- The free instance **sleeps after inactivity**; the first connection can take 30–60 seconds. The client
+  retries automatically and shows a reconnecting state.
+- Free services have **no persistent disk**. `DATA_FILE=/tmp/barricade-state.json` is ephemeral: ratings,
+  W/L/D and the leaderboard reset whenever the instance sleeps or redeploys; active matches are lost on
+  spin-down. Restart recovery works only for processes restarted while the filesystem survives.
+- This is a demo deployment. For durable ratings use a paid Render instance + disk (`/data`) or move the
+  store to PostgreSQL. Do not advertise competitive rankings as durable on the free tier.
+- WebSockets are supported on Render. Do not run more than one instance with the JSON store.
+
+## Game server (Railway alternative)
 
 The repository includes a root `Dockerfile` and `railway.json`.
 

@@ -26,8 +26,8 @@ M2 content work.
 - [x] Origin allow-list, input validation, frame/HTTP rate limits, security headers.
 - [x] Two-browser Playwright smoke: rooms, invite link, moves, Elo, rematch, reconnect, global queue,
       mobile layout.
-- [ ] **Deploy the game server to a persistent host and set `VITE_WS_URL`.** Blocked on hosting
-      credentials (Railway/Fly).
+- [ ] **Deploy the game server and set `VITE_WS_URL`.** Render Free Blueprint is ready; blocked on the
+      user's Render account/API key. Free-tier state is ephemeral; durable ratings need a disk/Postgres.
 
 ## Next — online production hardening
 

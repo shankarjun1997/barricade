@@ -58,6 +58,7 @@ export interface OnlineContextValue {
   readonly sessionNotice: string | null;
   readonly latencyMs: number | null;
   readonly serverOffset: number;
+  readonly serverNotice: string | null;
   connect: () => void;
   retry: () => void;
   resetIdentity: () => void;
@@ -134,6 +135,10 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [serverOffset, setServerOffset] = useState(0);
+  const serverNotice = useMemo(
+    () => (import.meta.env.VITE_SERVER_NOTICE as string | undefined)?.trim() || null,
+    [],
+  );
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<number | null>(null);
@@ -472,6 +477,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       sessionNotice,
       latencyMs,
       serverOffset,
+      serverNotice,
       connect,
       retry,
       resetIdentity,
@@ -506,6 +512,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       sessionNotice,
       latencyMs,
       serverOffset,
+      serverNotice,
       connect,
       retry,
       resetIdentity,

@@ -5,7 +5,7 @@
 | Item | Cost / status |
 | --- | --- |
 | Vercel static web (team `builder-os`) | ₹0 on the existing plan; live at https://barricade-ruby.vercel.app |
-| Game server | Runs locally / Docker-ready; production host pending |
+| Game server | Docker-verified; Render Free Blueprint ready, account/API key pending |
 | Persistence | JSON file; no managed database yet |
 | Payments | None (test keys unused) |
 | Domain | `*.vercel.app` / hosting default; custom domain later |
@@ -19,7 +19,9 @@ Assumes an early user base (≤5k registered, ≤100 concurrent matches), one re
 
 | Service | Assumption | Estimated monthly |
 | --- | --- | --- |
-| Railway game server | 1 small always-on container | $5–15 |
+| Render Free web service | Sleeps when idle, ephemeral disk | $0 |
+| Render Starter upgrade (recommended for durable ratings) | 1 instance + 1 GB disk | ~$7.25 |
+| Railway game server (alternative) | 1 small always-on container | $5–15 |
 | Railway volume for JSON state | 1 GB | ~$0.25–1 |
 | Railway PostgreSQL (next step) | 1–10 GB + backups | $5–10 |
 | Railway Redis (next step) | 256 MB–1 GB | $3–10 |
@@ -32,6 +34,13 @@ Assumes an early user base (≤5k registered, ≤100 concurrent matches), one re
 
 Razorpay fees are separate and transaction-based; confirm current rates. Revenue must be reconciled
 from verified webhook records, never client redirects.
+
+## Render Free demo limitations
+
+- No persistent disk: ratings and history reset when the instance sleeps/redeploys.
+- Cold start after idle can take 30–60 seconds; the client reconnects automatically.
+- Active matches do not survive a spin-down. Do not present the free-tier leaderboard as durable.
+- Upgrade to Render Starter + disk (`DATA_FILE=/data/state.json`) or PostgreSQL before competitive launch.
 
 ## Runbook (current)
 

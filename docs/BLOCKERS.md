@@ -4,15 +4,17 @@ Nothing below is faked in the product. Items list the exact prerequisite.
 
 ## Blocking global online play
 
-1. **Persistent game-server hosting (current blocker).**
-   The authoritative server is built, tested and Docker-packaged, but no hosting account is authenticated
-   on this machine. Railway CLI is absent; Fly CLI is installed but logged out; no Railway/Fly/Render/
-   Cloudflare tokens are available. Need one of:
-   - a Railway API token/project, or
-   - `flyctl auth login` (then deploy to Fly), or
-   - equivalent container host credentials.
-   Required service settings are in `docs/DEPLOYMENT.md` (Dockerfile, `/data` volume,
-   `ALLOWED_ORIGINS`, `DATA_FILE`, `RECONNECT_GRACE_MS`).
+1. **Render account/API key (current blocker).**
+   The authoritative server is built, tested, Docker-verified and has a Render Blueprint (`render.yaml`).
+   No Render account/API key is authenticated on this machine, so the user must either:
+   - create a Render account, connect this GitHub repo and apply the Blueprint, then send the service URL, or
+   - paste a Render API key and I create/configure the service via the API.
+   Render Free caveats: the instance sleeps after inactivity (cold start up to a minute) and has **no
+   persistent disk**. The Blueprint sets `DATA_FILE=/tmp/barricade-state.json`, so ratings/records reset
+   on sleep or redeploy and active matches are lost on spin-down. That is a demo deployment; durable
+   records need a paid disk or PostgreSQL.
+   Alternatives remain available: Railway token, `flyctl auth login`, or AWS Lightsail (existing root
+   credentials, billable ~$5–7/mo).
 2. **`VITE_WS_URL` on Vercel.**
    Once the server URL exists, set `wss://<server>/ws` in the Vercel project environment and redeploy.
    Until then production shows the honest online setup screen.

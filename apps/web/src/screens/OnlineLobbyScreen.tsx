@@ -128,6 +128,13 @@ export function OnlineLobbyScreen() {
         </div>
       ) : null}
 
+      {online.serverNotice ? (
+        <div className="banner gold" role="status">
+          <strong>Host notice:</strong>
+          <span>{online.serverNotice}</span>
+        </div>
+      ) : null}
+
       {online.sessionNotice ? (
         <div className="banner gold" role="alert">
           <strong>Session problem:</strong>
