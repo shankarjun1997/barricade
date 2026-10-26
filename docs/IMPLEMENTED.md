@@ -56,7 +56,7 @@ screen-reader status: **Done**. No horizontal overflow at 390 px in local and on
 | Accounts and guest linking | Planned |
 | Spectators and tournaments | Planned |
 | Multi-replica scale | Planned (single-writer JSON now) |
-| Hosted production endpoint | Pending Render account/API key (Blueprint ready) |
+| Hosted production endpoint | Done — https://barricade-w45u.onrender.com (Render Free; ephemeral ratings) |
 
 ## Clocks
 

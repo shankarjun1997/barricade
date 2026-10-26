@@ -202,10 +202,10 @@ export function HomeScreen() {
       </section>
 
       <div className="banner gold">
-        <strong>In this build:</strong>
+        <strong>Online is live:</strong>
         <span>
-          Local duels, eight bots, five puzzles and server-authoritative online play with global matchmaking
-          and private rooms. The online endpoint activates when the game server URL is configured.
+          Local duels, eight bots, five puzzles, global matchmaking and private rooms — all server-authoritative.
+          This demo runs on Render Free: the server may sleep when idle and ratings reset after a restart.
           Reactions, social features, subscriptions and analytics come next.
         </span>
       </div>

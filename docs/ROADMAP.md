@@ -26,8 +26,10 @@ M2 content work.
 - [x] Origin allow-list, input validation, frame/HTTP rate limits, security headers.
 - [x] Two-browser Playwright smoke: rooms, invite link, moves, Elo, rematch, reconnect, global queue,
       mobile layout.
-- [ ] **Deploy the game server and set `VITE_WS_URL`.** Render Free Blueprint is ready; blocked on the
-      user's Render account/API key. Free-tier state is ephemeral; durable ratings need a disk/Postgres.
+- [x] **Deploy the game server and set `VITE_WS_URL`.** Live on Render Free at
+      https://barricade-w45u.onrender.com; Vercel wired with WSS URL + free-tier notice.
+- [ ] Replace the free-tier `/tmp` store with durable PostgreSQL (and Redis) so ratings/history survive
+      restarts and redeploys.
 
 ## Next — online production hardening
 

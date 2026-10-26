@@ -5,11 +5,12 @@
 | Component | Host | Status |
 | --- | --- | --- |
 | Web client | Vercel, team `builder-os`, project `barricade` | Live: https://barricade-ruby.vercel.app |
-| Game server | Render Free Blueprint (`render.yaml`) | Deploy-ready; user's Render account/API key pending |
-| Online production | `VITE_WS_URL` + `VITE_SERVER_NOTICE` on Vercel | Pending server deployment |
+| Game server | Render Free (`render.yaml`) | **Live:** https://barricade-w45u.onrender.com |
+| Online production | `VITE_WS_URL` + `VITE_SERVER_NOTICE` on Vercel | Configured and deployed |
 
-The deployed web app currently shows an honest "online server not configured" screen. Local matches,
-bots and puzzles work in production. Once the game server is deployed, set `VITE_WS_URL` and redeploy.
+The web app is wired to the live Render service. Vercel production carries
+`VITE_WS_URL=wss://barricade-w45u.onrender.com/ws` and a free-tier disclosure in `VITE_SERVER_NOTICE`.
+Local matches, bots, puzzles and online play all run in production.
 
 ## Web client (Vercel)
 
@@ -33,7 +34,16 @@ vercel deploy --prod --yes --name barricade --scope builder-os
 
 The repository includes a Render Blueprint (`render.yaml`) and a root `Dockerfile`.
 
+### Deployed service
+
+- URL: https://barricade-w45u.onrender.com
+- Health: https://barricade-w45u.onrender.com/health
+- WebSocket: `wss://barricade-w45u.onrender.com/ws`
+- Plan: Render Free, region Singapore; `DATA_FILE=/tmp/barricade-state.json` (ephemeral by design).
+
 ### Option A — Dashboard Blueprint (no API key)
+
+Use this to recreate the service in another account/environment.
 
 1. Sign in at https://render.com with GitHub.
 2. **New +** → **Blueprint** → connect `shankarjun1997/barricade` → apply the detected `render.yaml`.

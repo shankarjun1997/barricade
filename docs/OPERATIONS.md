@@ -5,12 +5,12 @@
 | Item | Cost / status |
 | --- | --- |
 | Vercel static web (team `builder-os`) | ₹0 on the existing plan; live at https://barricade-ruby.vercel.app |
-| Game server | Docker-verified; Render Free Blueprint ready, account/API key pending |
+| Game server | Live on Render Free: https://barricade-w45u.onrender.com (sleeps when idle, `/tmp` state) |
 | Persistence | JSON file; no managed database yet |
 | Payments | None (test keys unused) |
 | Domain | `*.vercel.app` / hosting default; custom domain later |
 
-Incremental cost while only the web app is deployed: **≈ ₹0**.
+Current incremental cost: **≈ ₹0** (Vercel existing plan + Render Free).
 
 ## Planned online footprint
 

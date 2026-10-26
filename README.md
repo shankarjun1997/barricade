@@ -4,9 +4,9 @@ A competitive grid-duel game — race your piece to the far side while placing b
 rival's route.
 
 **Web app:** https://barricade-ruby.vercel.app
-**Game server:** implemented, Docker-verified and deploy-ready; the production endpoint is pending a
-Render account/API key (see `docs/BLOCKERS.md`). Until `VITE_WS_URL` is set, `/online` shows an honest
-setup screen and the rest of the game remains fully playable.
+**Game server:** live at https://barricade-w45u.onrender.com (Render Free — it sleeps when idle and its
+`/tmp` state resets on restart, so online ratings are demo-only for now). The web app is wired to it with
+`VITE_WS_URL`.
 
 This is an original product: original name, branding, interface, implementation and synthesized audio.
 The rules are a public abstract duel; no third-party assets or code are used.
@@ -173,14 +173,14 @@ console errors and no horizontal overflow at 390 px.
 | Piece | Host | Status |
 | --- | --- | --- |
 | Web client | Vercel, team `builder-os` | Live at https://barricade-ruby.vercel.app |
-| Game server | Render Free Blueprint (`render.yaml` + Dockerfile) | Deploy-ready; account/API key pending |
+| Game server | Render Free (`render.yaml` + Dockerfile) | **Live:** https://barricade-w45u.onrender.com |
 | Persistence | JSON file | **Render Free:** `/tmp` (resets on sleep/redeploy); paid disk/Postgres needed for durable ratings |
 | Payments | Razorpay test keys in git-ignored `.env.local` | Not wired yet; billing stays off |
 
-After the server is deployed, set `VITE_WS_URL=wss://<server-host>/ws` on Vercel and redeploy. The server
-must allow the web origin via `ALLOWED_ORIGINS`. Render Free sleeps when idle and has no persistent
-disk, so set `VITE_SERVER_NOTICE` to disclose that ratings may reset. Full steps:
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+This deployment is wired: Vercel has `VITE_WS_URL=wss://barricade-w45u.onrender.com/ws` and an honest
+`VITE_SERVER_NOTICE`. Render Free sleeps when idle and has no persistent disk, so ratings/leaderboard
+reset after a restart or redeploy; active matches do not survive a spin-down. Durable play needs a paid
+disk or PostgreSQL. Full steps and alternatives: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Documentation
 

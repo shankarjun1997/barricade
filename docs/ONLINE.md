@@ -1,5 +1,14 @@
 # Online architecture and protocol
 
+## Deployed endpoint
+
+- WebSocket: `wss://barricade-w45u.onrender.com/ws`
+- Health: `https://barricade-w45u.onrender.com/health`
+- Lobby: `https://barricade-w45u.onrender.com/api/lobby`
+- Hosting: Render Free, Singapore. The instance sleeps after inactivity and has no persistent disk, so
+  `/tmp` state (ratings, history) resets on sleep/redeploy. This is a demo deployment; see
+  `docs/BLOCKERS.md` for the durable-storage plan.
+
 ## Trust boundary
 
 The browser is a renderer and input device. It never decides move legality, clock ownership, match
