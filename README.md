@@ -21,12 +21,15 @@ audio. The rules are a public abstract duel; no third-party assets or code are u
 - **Accessibility** — keyboard shortcuts, touch targets, focus states, reduced-motion support, non-colour
   pawn glyphs, labelled board controls and screen-reader status updates.
 
-Try it locally:
+Try it locally (Node 20+, npm 10+):
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
 ```
+
+> npm 9 has a known workspace/arborist bug with the current vitest tree. Use npm 10+, or
+> `npx npm@11 install` if your Node install still ships npm 9.
 
 Or use the production build:
 
