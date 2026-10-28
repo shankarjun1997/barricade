@@ -130,7 +130,7 @@ try {
   };
   const rename = async (page, name) => {
     await page.locator('#online-name').fill(name);
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.locator('#online-name').press('Enter');
   };
   const resign = async (page) => {
     await page.getByRole('button', { name: 'Resign' }).click();
@@ -149,6 +149,7 @@ try {
     await rename(b, 'Smoke Beta');
 
     console.log('\n== rooms + invite link ==');
+    await a.getByRole('tab', { name: 'Rooms' }).click();
     await a.getByRole('button', { name: 'Create room' }).click();
     await a.locator('.room-code').waitFor({ timeout: 10_000 });
     const code = (await a.locator('.room-code').innerText()).trim();
@@ -157,7 +158,7 @@ try {
     await b.waitForURL('**/online/match', { timeout: 15_000 });
     await a.waitForURL('**/online/match', { timeout: 15_000 });
     await a.locator('.board').waitFor();
-    assert.ok(await a.locator('.page-head .pill').filter({ hasText: 'You are Blue' }).isVisible());
+    assert.ok(await a.locator('.page-head .pill').filter({ hasText: 'Blue' }).isVisible());
 
     console.log('== authoritative moves ==');
     await a.getByRole('button', { name: 'Move to E2' }).click();
@@ -172,7 +173,7 @@ try {
     await a.getByRole('button', { name: 'Rematch' }).click();
     await b.getByRole('button', { name: 'Accept rematch' }).waitFor({ timeout: 8_000 });
     await b.getByRole('button', { name: 'Accept rematch' }).click();
-    await a.locator('.page-head .pill').filter({ hasText: 'You are Red' }).waitFor({ timeout: 8_000 });
+    await a.locator('.page-head .pill').filter({ hasText: 'Red' }).waitFor({ timeout: 8_000 });
 
     console.log('== reconnect within grace ==');
     await b.goto('about:blank');
@@ -193,7 +194,7 @@ try {
     await a.waitForURL('**/online/match', { timeout: 15_000 });
     await b.waitForURL('**/online/match', { timeout: 15_000 });
     await a.locator('.board').waitFor();
-    assert.match((await a.locator('.eyebrow').first().innerText()).toLowerCase(), /global match/);
+    assert.match((await a.locator('.eyebrow').first().innerText()).toLowerCase(), /global/);
     await a.screenshot({ path: path.join(artifacts, 'online-match-desktop.png'), fullPage: true });
     await resign(a);
     await backToLobby(a);

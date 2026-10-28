@@ -97,32 +97,24 @@ export function OnlineMatchScreen() {
   }, []);
 
   if (!match) {
-    const configured = online.configured;
     return (
-      <div className="card">
+      <div className="panel">
         <span className="eyebrow">Online</span>
         <h1 style={{ fontSize: '1.35rem', margin: '6px 0 8px' }}>
-          {!configured
+          {!online.configured
             ? 'Online server not configured'
             : status === 'connecting' || status === 'reconnecting'
-              ? 'Connecting to the online server…'
+              ? 'Connecting…'
               : 'No active online match'}
         </h1>
         <p className="muted small">
-          {!configured
-            ? 'Set VITE_WS_URL to the deployed game server, then rebuild. Local play remains fully available.'
-            : 'Start global matchmaking or create a private room from the online lobby.'}
+          {!online.configured
+            ? 'Set VITE_WS_URL to the game server and rebuild. Local play remains available.'
+            : 'Start global matchmaking or create a room from the online lobby.'}
         </p>
-        {status === 'reconnecting' ? (
-          <div className="row" style={{ marginTop: 12 }}>
-            <span className="spinner" aria-hidden="true" />
-            <span className="small muted">Reconnecting with your session token…</span>
-          </div>
-        ) : null}
         <div className="btn-row" style={{ marginTop: 16 }}>
           <Link className="btn btn-primary" to="/online">Online lobby</Link>
           <Link className="btn btn-ghost" to="/play">Local play</Link>
-          <Link className="btn btn-ghost" to="/">Home</Link>
         </div>
       </div>
     );
@@ -147,7 +139,7 @@ export function OnlineMatchScreen() {
   const isMyTurn = active && match.game.turn === match.youAre;
   const modeInfo = modeById(match.modeId);
   const tc = timeControlById(match.timeControlId);
-  const history = match.game.history.slice(-24);
+  const history = match.game.history.slice(-40);
 
   const outcome = !match.result
     ? 'abandoned'
@@ -177,67 +169,62 @@ export function OnlineMatchScreen() {
 
   return (
     <div className="stack">
-      <header className="page-head" style={{ marginBottom: 0 }}>
+      <header className="page-head compact-head">
         <div>
           <span className="eyebrow">
-            Online · {modeInfo?.name ?? match.modeId} · {match.roomCode ? `Room ${match.roomCode}` : 'Global match'}
+            Online · {modeInfo?.name ?? match.modeId} · {match.roomCode ? `Room ${match.roomCode}` : 'Global'}
           </span>
-          <h1 style={{ fontSize: 'clamp(1.2rem, 2.2vw, 1.5rem)' }}>
-            {match.config.size}×{match.config.size} arena
-            <span className="muted" style={{ fontWeight: 500, fontSize: '0.8em' }}>
+          <h1 style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.4rem)' }}>
+            {match.config.size}×{match.config.size}
+            <span className="muted" style={{ fontWeight: 500, fontSize: '0.85em' }}>
               {' '}· {match.config.wallsPerPlayer} barriers · {formatTimeControl(match.initialMs, match.incrementMs)}
             </span>
           </h1>
         </div>
-        <div className="row small">
+        <div className="row small" style={{ gap: 8 }}>
           <span className={`pill ${match.youAre === 'blue' ? 'pill-blue' : 'pill-red'}`}>
-            You are {match.youAre === 'blue' ? 'Blue' : 'Red'}
+            {match.youAre === 'blue' ? 'Blue' : 'Red'}
           </span>
           <span className={`pill ${status === 'online' ? 'pill-green' : 'pill-gold'}`}>
-            {status === 'online' ? `Online${online.latencyMs !== null ? ` · ${online.latencyMs}ms` : ''}` : status}
+            {status === 'online' ? 'Online' : status}
           </span>
         </div>
       </header>
 
       {online.notice ? (
-        <div className={`banner ${online.notice.kind === 'error' ? 'gold' : online.notice.kind === 'success' ? 'green' : ''}`} role="status">
+        <div className={`notice-line ${online.notice.kind}`} role="status">
           <span>{online.notice.message}</span>
         </div>
       ) : null}
 
       {status === 'reconnecting' ? (
-        <div className="banner gold" role="alert">
+        <div className="notice-line warning" role="alert">
           <span className="spinner" aria-hidden="true" />
-          <span>
-            Connection lost. Your server clock keeps running. Reconnecting automatically — do not close this tab.
-          </span>
+          <span>Connection lost. Reconnecting…</span>
           <button type="button" className="btn btn-sm btn-ghost" onClick={online.retry}>Retry</button>
         </div>
       ) : null}
 
       {online.sessionNotice ? (
-        <div className="banner gold" role="alert">
-          <strong>Session problem:</strong>
+        <div className="notice-line error" role="alert">
           <span>{online.sessionNotice}</span>
-          <Link className="btn btn-sm btn-ghost" to="/online">Open lobby</Link>
+          <Link className="btn btn-sm btn-ghost" to="/online">Lobby</Link>
         </div>
       ) : null}
 
       {active && !presence.connected ? (
-        <div className="banner gold" role="alert">
-          <strong>Opponent disconnected.</strong>
+        <div className="notice-line warning" role="alert">
           <span>
-            {forfeitIn !== null
-              ? `Reconnect window: ${Math.ceil(forfeitIn / 1000)}s. If it expires, the server awards a forfeit win.`
-              : 'Waiting for the server to apply the disconnect rule.'}
+            Opponent disconnected.
+            {forfeitIn !== null ? ` Forfeit in ${Math.ceil(forfeitIn / 1000)}s.` : ' Waiting for the server rule.'}
           </span>
         </div>
       ) : null}
 
       {active && incomingDraw ? (
-        <div className="banner green" role="status">
-          <strong>{incomingDraw.from.name} offers a draw.</strong>
-          <div className="row" style={{ gap: 8 }}>
+        <div className="notice-line success" role="status">
+          <span>{incomingDraw.from.name} offers a draw.</span>
+          <div className="row" style={{ gap: 6 }}>
             <button type="button" className="btn btn-sm btn-primary" onClick={() => online.respondDraw(match.id, true)}>
               Accept
             </button>
@@ -245,12 +232,6 @@ export function OnlineMatchScreen() {
               Decline
             </button>
           </div>
-        </div>
-      ) : null}
-
-      {active && drawOfferByMe ? (
-        <div className="banner">
-          <span>Draw offer sent. Waiting for your opponent's response.</span>
         </div>
       ) : null}
 
@@ -264,12 +245,12 @@ export function OnlineMatchScreen() {
               <span className="eyebrow">Server result</span>
               <h2>{title}</h2>
               <p className="small muted">
-                {match.result ? reasonLabel(match.result.reason) : 'Match abandoned by the server'} · vs {opponent.name}
+                {match.result ? reasonLabel(match.result.reason) : 'Abandoned'} · vs {opponent.name}
               </p>
             </div>
-            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-              <div className="tiny muted">Your rating</div>
-              <div className="mono" style={{ fontSize: '1.3rem', fontWeight: 800 }}>{you.rating}</div>
+            <div className="online-result-rating">
+              <div className="tiny muted">Rating</div>
+              <div className="mono" style={{ fontSize: '1.25rem', fontWeight: 800 }}>{you.rating}</div>
               {match.ratingChanges ? (
                 <div className={`small ${ratingDelta > 0 ? 'green' : ratingDelta < 0 ? 'red' : 'dim'}`}>
                   {ratingDelta > 0 ? '+' : ''}{ratingDelta}
@@ -277,17 +258,16 @@ export function OnlineMatchScreen() {
               ) : null}
             </div>
           </div>
-          <div className="row" style={{ marginTop: 12, gap: 8 }}>
-            <span className="pill">{match.game.ply} {plural(match.game.ply, 'move')}</span>
-            <span className="pill">{match.game.history.filter((record) => record.move.kind === 'wall').length} barriers</span>
-            <span className="pill">{formatDuration(Math.max(1000, (match.serverNow - match.createdAt))) }</span>
-            {match.ratingChanges ? <span className="pill pill-gold">Elo updated</span> : <span className="pill">Unrated</span>}
+          <div className="row" style={{ marginTop: 10, gap: 6 }}>
+            <span className="pill">{match.game.ply} {plural(match.game.ply, 'ply', 'plies')}</span>
+            <span className="pill">{formatDuration(Math.max(1000, match.serverNow - match.createdAt))}</span>
+            {match.ratingChanges ? <span className="pill">Elo updated</span> : null}
           </div>
 
           {rematchRequestedByOpponent && !rematchRequestedByMe ? (
-            <div className="banner green" style={{ marginTop: 12 }}>
-              <strong>{opponent.name} wants a rematch.</strong>
-              <div className="row" style={{ gap: 8 }}>
+            <div className="notice-line success" style={{ marginTop: 10 }}>
+              <span>{opponent.name} wants a rematch.</span>
+              <div className="row" style={{ gap: 6 }}>
                 <button type="button" className="btn btn-sm btn-primary" onClick={() => online.respondRematch(match.id, true)}>
                   Accept rematch
                 </button>
@@ -298,202 +278,142 @@ export function OnlineMatchScreen() {
             </div>
           ) : null}
           {rematchRequestedByMe ? (
-            <div className="banner" style={{ marginTop: 12 }}>
-              <span className="spinner" aria-hidden="true" />
-              <span>Rematch requested — waiting for {opponent.name}.</span>
-            </div>
+            <p className="small muted" style={{ marginTop: 10 }}>Rematch requested — waiting for {opponent.name}.</p>
           ) : null}
 
           <div className="btn-row" style={{ marginTop: 12 }}>
             {!rematchRequestedByMe ? (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm"
                 onClick={() => online.requestRematch(match.id)}
                 disabled={!presence.connected}
               >
                 Rematch
               </button>
             ) : null}
-            <button type="button" className="btn" onClick={backToLobby}>Back to lobby</button>
-            <Link className="btn btn-ghost" to="/">Home</Link>
+            <button type="button" className="btn btn-sm" onClick={backToLobby}>Back to lobby</button>
+            <Link className="btn btn-sm btn-ghost" to="/">Home</Link>
           </div>
         </section>
       ) : null}
 
-      <div className="match-layout">
-        <div className="match-board-col">
-          <PlayerBar
-            player={opponentColor}
-            name={opponent.name}
-            subtitle={`Opponent · ${opponent.rating}`}
-            wallsLeft={match.game.wallsLeft[opponentColor]}
-            totalWalls={match.config.wallsPerPlayer}
-            clockMs={clockFor(opponentColor)}
-            hasClock={match.initialMs > 0}
-            active={active && match.game.turn === opponentColor}
-          />
+      <div className="match-stage">
+        <PlayerBar
+          player={opponentColor}
+          name={opponent.name}
+          subtitle={
+            presence.connected
+              ? `Opponent · ${opponent.rating}`
+              : `Disconnected${forfeitIn !== null ? ` · ${Math.ceil(forfeitIn / 1000)}s` : ''}`
+          }
+          wallsLeft={match.game.wallsLeft[opponentColor]}
+          totalWalls={match.config.wallsPerPlayer}
+          clockMs={clockFor(opponentColor)}
+          hasClock={match.initialMs > 0}
+          active={active && match.game.turn === opponentColor}
+        />
 
-          <Board
-            state={match.game}
-            interactive={canAct}
-            mode={mode}
-            wallOrientation={orientation}
-            onMove={(to) => sendMove({ kind: 'move', to })}
-            onWall={(wallMove) => sendMove(wallMove)}
-            lastMove={match.game.lastMove?.move ?? null}
-          />
+        <Board
+          state={match.game}
+          interactive={canAct}
+          mode={mode}
+          wallOrientation={orientation}
+          onMove={(to) => sendMove({ kind: 'move', to })}
+          onWall={(wallMove) => sendMove(wallMove)}
+          lastMove={match.game.lastMove?.move ?? null}
+        />
 
-          <PlayerBar
-            player={match.youAre}
-            name={you.name}
-            subtitle={`You · ${you.rating}`}
-            wallsLeft={match.game.wallsLeft[match.youAre]}
-            totalWalls={match.config.wallsPerPlayer}
-            clockMs={clockFor(match.youAre)}
-            hasClock={match.initialMs > 0}
-            active={active && isMyTurn}
-            thinking={pending}
-          />
+        <PlayerBar
+          player={match.youAre}
+          name={you.name}
+          subtitle={`You · ${you.rating}`}
+          wallsLeft={match.game.wallsLeft[match.youAre]}
+          totalWalls={match.config.wallsPerPlayer}
+          clockMs={clockFor(match.youAre)}
+          hasClock={match.initialMs > 0}
+          active={active && isMyTurn}
+          thinking={pending}
+        />
 
-          <div className="match-status" role="status" aria-live="polite">
-            <span className="turn-dot" aria-hidden="true" />
-            <span>
-              {finished
-                ? 'Match complete.'
-                : pending
-                  ? 'Sending move to the server…'
-                  : isMyTurn
-                    ? 'Your move.'
-                    : `${opponent.name}'s move.`}
-            </span>
-            {match.roomCode ? <span className="pill">Room {match.roomCode}</span> : null}
-            {active && presence.reconnectDeadline ? <span className="pill pill-gold">Reconnect window</span> : null}
-          </div>
-
-          <div className="match-toolbar">
-            <div className="segmented" role="group" aria-label="Action mode">
-              <button type="button" aria-pressed={mode === 'move'} onClick={() => setMode('move')} disabled={!active}>
-                Move
-              </button>
-              <button
-                type="button"
-                aria-pressed={mode === 'wall'}
-                onClick={() => setMode('wall')}
-                disabled={!active || match.game.wallsLeft[match.game.turn] <= 0}
-              >
-                Barrier ({match.game.wallsLeft[match.game.turn]})
-              </button>
-            </div>
-            {mode === 'wall' ? (
-              <div className="segmented" role="group" aria-label="Barrier orientation">
-                <button type="button" aria-pressed={orientation === 'H'} onClick={() => setOrientation('H')}>
-                  Horizontal
-                </button>
-                <button type="button" aria-pressed={orientation === 'V'} onClick={() => setOrientation('V')}>
-                  Vertical
-                </button>
-              </div>
-            ) : null}
-            <div className="match-actions">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setConfirmResign(true)}
-                disabled={!active}
-              >
-                Resign
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => online.offerDraw(match.id)}
-                disabled={!active || match.drawOfferBy !== null}
-              >
-                Offer draw
-              </button>
-            </div>
-          </div>
-          <p className="tiny dim" style={{ margin: 0 }}>
-            {canAct ? 'Board input is live. ' : active ? 'Waiting for the server state. ' : ''}
-            Shortcuts: M move · W barrier · H/V orientation. Undo is disabled online.
-          </p>
+        <div className="match-status" role="status" aria-live="polite">
+          <span className="turn-dot" aria-hidden="true" />
+          <span>
+            {finished ? 'Match complete.' : pending ? 'Sending…' : isMyTurn ? 'Your move.' : `${opponent.name}'s move.`}
+          </span>
+          <span className="pill">{match.game.ply} {plural(match.game.ply, 'ply', 'plies')}</span>
+          {drawOfferByMe && active ? <span className="pill">Draw offered</span> : null}
         </div>
 
-        <aside className="side-panel">
-          <div className="card">
-            <div className="card-title">Server match</div>
-            <div className="row-between small">
-              <span className="muted">Mode</span>
-              <span>{modeInfo?.name ?? match.modeId}</span>
-            </div>
-            <div className="row-between small" style={{ marginTop: 5 }}>
-              <span className="muted">Clock</span>
-              <span>{tc?.label ?? match.timeControlId}</span>
-            </div>
-            <div className="row-between small" style={{ marginTop: 5 }}>
-              <span className="muted">Connection</span>
-              <span className={status === 'online' ? 'green' : 'gold'}>{status}</span>
-            </div>
-            <div className="row-between small" style={{ marginTop: 5 }}>
-              <span className="muted">Server time</span>
-              <span className="mono tiny">{new Date(liveServerNow).toLocaleTimeString()}</span>
-            </div>
-            <div className="divider" />
-            <div className="tiny dim">
-              Moves and clocks are validated by the server. A forced reload can reconnect to this same match
-              within 60 seconds.
-            </div>
+        <div className="action-dock">
+          <div className="segmented" role="group" aria-label="Action mode">
+            <button type="button" aria-pressed={mode === 'move'} onClick={() => setMode('move')} disabled={!active}>
+              Move
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === 'wall'}
+              onClick={() => setMode('wall')}
+              disabled={!active || match.game.wallsLeft[match.game.turn] <= 0}
+            >
+              Barrier ({match.game.wallsLeft[match.game.turn]})
+            </button>
           </div>
-
-          <div className="card">
-            <div className="row-between">
-              <div className="card-title" style={{ marginBottom: 0 }}>Move log</div>
-              <span className="pill">{match.game.ply} {plural(match.game.ply, 'ply', 'plies')}</span>
+          {mode === 'wall' ? (
+            <div className="segmented" role="group" aria-label="Barrier orientation">
+              <button type="button" aria-pressed={orientation === 'H'} onClick={() => setOrientation('H')}>H</button>
+              <button type="button" aria-pressed={orientation === 'V'} onClick={() => setOrientation('V')}>V</button>
             </div>
-            {history.length === 0 ? (
-              <div className="empty-note">Blue opens. The server is waiting for the first move.</div>
-            ) : (
-              <ol className="log-list">
-                {history.map((record) => (
-                  <li key={record.ply} className={`log-entry ${record.by}-log`}>
-                    <span className="log-ply">{record.ply}.</span>
-                    <span className="log-actor">{record.by === 'blue' ? 'Blue' : 'Red'}</span>
-                    <span>{describeMove(record.move, match.config.size)}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
+          ) : null}
+          <div className="dock-actions">
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => online.offerDraw(match.id)}
+              disabled={!active || match.drawOfferBy !== null}
+            >
+              Draw
+            </button>
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => setConfirmResign(true)} disabled={!active}>
+              Resign
+            </button>
           </div>
-
-          <div className="card">
-            <div className="card-title">Opponent</div>
-            <div className="row-between small">
-              <span className="muted">Status</span>
-              <span className={presence.connected ? 'green' : 'red'}>
-                {presence.connected ? 'Connected' : forfeitIn !== null ? `Disconnected · ${Math.ceil(forfeitIn / 1000)}s` : 'Disconnected'}
-              </span>
-            </div>
-            <div className="row-between small" style={{ marginTop: 5 }}>
-              <span className="muted">Rating</span>
-              <span className="mono">{opponent.rating}</span>
-            </div>
-            <div className="row-between small" style={{ marginTop: 5 }}>
-              <span className="muted">Record</span>
-              <span>{opponent.wins}W · {opponent.losses}L · {opponent.draws}D</span>
-            </div>
-            <div className="divider" />
-            <div className="tiny dim">
-              Disconnects never award an instant win. The server waits out the reconnect window, then applies
-              the predefined forfeit rule.
-            </div>
-          </div>
-        </aside>
+        </div>
       </div>
+
+      <details className="quiet-details">
+        <summary>Move log · {match.game.ply}</summary>
+        {history.length === 0 ? (
+          <p className="empty-note">No moves yet.</p>
+        ) : (
+          <ol className="log-list">
+            {history.map((record) => (
+              <li key={record.ply} className={`log-entry ${record.by}-log`}>
+                <span className="log-ply">{record.ply}.</span>
+                <span className="log-actor">{record.by === 'blue' ? 'Blue' : 'Red'}</span>
+                <span>{describeMove(record.move, match.config.size)}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </details>
+
+      <details className="quiet-details">
+        <summary>Match details</summary>
+        <div className="quiet-content small muted">
+          <div className="row-between"><span>Mode</span><span>{modeInfo?.name ?? match.modeId}</span></div>
+          <div className="row-between"><span>Clock</span><span>{tc?.label ?? match.timeControlId}</span></div>
+          <div className="row-between"><span>Room</span><span>{match.roomCode ?? 'Global'}</span></div>
+          <div className="row-between"><span>Connection</span><span>{status}</span></div>
+          <div className="divider" />
+          <p>Move one square or place a barrier. A barrier cannot seal every route. Reach the far row to win.</p>
+          <p>Shortcuts: M move · W barrier · H/V orientation. Undo is disabled online.</p>
+        </div>
+      </details>
 
       {confirmResign ? (
         <Modal
-          title="Resign this online match?"
+          title="Resign this match?"
           confirmLabel="Resign"
           danger
           onConfirm={() => {
@@ -502,7 +422,7 @@ export function OnlineMatchScreen() {
           }}
           onCancel={() => setConfirmResign(false)}
         >
-          <p>The server will award the win to your opponent and update both ratings. This cannot be undone.</p>
+          <p>The server awards the win to your opponent and updates both ratings.</p>
         </Modal>
       ) : null}
     </div>

@@ -39,6 +39,8 @@ const NAV = [
   { to: '/profile', label: 'Profile', short: 'Me', glyph: 'Me' },
 ];
 
+const BOTTOM_NAV = NAV.filter((item) => item.to !== '/leaderboard');
+
 export function Shell() {
   const { profile, toasts, dismissToast, settings, updateSettings } = useApp();
 
@@ -82,7 +84,7 @@ export function Shell() {
       </main>
 
       <nav className="bottomnav" aria-label="Primary mobile">
-        {NAV.map((item) => (
+        {BOTTOM_NAV.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'active' : '')}>
             <span className="nav-glyph" aria-hidden="true">
               {item.glyph}

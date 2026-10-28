@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { botById, modeById } from '@barricade/engine';
 import { useApp } from '../state/AppContext.js';
-import {
-  ACHIEVEMENTS,
-  favouriteMode,
-  levelInfo,
-  validateName,
-  winRate,
-} from '../lib/profile.js';
+import { ACHIEVEMENTS, favouriteMode, levelInfo, validateName, winRate } from '../lib/profile.js';
 import { formatDate, formatDuration, plural } from '../lib/format.js';
 
 export function ProfileScreen() {
@@ -35,16 +29,18 @@ export function ProfileScreen() {
 
   return (
     <div className="stack">
-      <header className="page-head">
+      <header className="page-head compact-head">
         <div>
           <span className="eyebrow">Player profile</span>
           <h1>Your record</h1>
-          <p className="page-sub">Everything here is stored locally on this device. Accounts and public profiles arrive with online play.</p>
         </div>
-        <Link className="btn btn-ghost" to="/settings">Settings</Link>
+        <div className="row" style={{ gap: 8 }}>
+          <Link className="btn btn-sm btn-ghost" to="/leaderboard">Leaderboard</Link>
+          <Link className="btn btn-sm btn-ghost" to="/settings">Settings</Link>
+        </div>
       </header>
 
-      <section className="card">
+      <section className="panel">
         <div className="profile-hero">
           <div className="avatar-large" aria-hidden="true">
             {profile.name.slice(0, 2).toUpperCase()}
@@ -66,144 +62,115 @@ export function ProfileScreen() {
                     }}
                   />
                 </div>
-                <button type="button" className="btn btn-primary" onClick={saveName}>Save</button>
-                <button type="button" className="btn btn-ghost" onClick={() => { setName(profile.name); setEditing(false); }}>Cancel</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={saveName}>Save</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setName(profile.name); setEditing(false); }}>Cancel</button>
               </div>
             ) : (
-              <>
-                <div className="row" style={{ gap: 10 }}>
-                  <h2 style={{ fontSize: '1.5rem' }}>{profile.name}</h2>
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>Edit</button>
-                </div>
-                <div className="row small muted" style={{ gap: 10 }}>
-                  <span className="pill pill-green">Level {level.level}</span>
-                  <span className="pill">{profile.rating} rated</span>
-                  <span className="pill">{unlocked}/{ACHIEVEMENTS.length} achievements</span>
-                  <span>Joined {formatDate(profile.createdAt)}</span>
-                </div>
-              </>
+              <div className="row" style={{ gap: 10 }}>
+                <h2 style={{ fontSize: '1.45rem' }}>{profile.name}</h2>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>Edit</button>
+              </div>
             )}
-            <div style={{ marginTop: 14 }}>
-              <div className="row-between tiny muted">
+            <p className="small muted">
+              Level {level.level} · {profile.rating} rating · {unlocked}/{ACHIEVEMENTS.length} achievements · joined{' '}
+              {formatDate(profile.createdAt)}
+            </p>
+            <div style={{ marginTop: 10 }}>
+              <div className="xp-bar" aria-label={`Level progress ${Math.round(level.progress * 100)} percent`}>
+                <div className="xp-fill" style={{ width: `${Math.round(level.progress * 100)}%` }} />
+              </div>
+              <div className="row-between tiny muted" style={{ marginTop: 4 }}>
                 <span>Level {level.level}</span>
                 <span>{profile.xp} / {level.next} XP</span>
-              </div>
-              <div className="xp-bar" style={{ marginTop: 6 }} aria-label={`Level progress ${Math.round(level.progress * 100)} percent`}>
-                <div className="xp-fill" style={{ width: `${Math.round(level.progress * 100)}%` }} />
               </div>
             </div>
           </div>
         </div>
+        <div className="divider" />
+        <div className="row small muted" style={{ gap: 14, flexWrap: 'wrap' }}>
+          <span>{formatDuration(profile.playtimeMs)} played</span>
+          <span>{profile.counters.wallsPlaced} barriers</span>
+          <span>{profile.counters.puzzlesSolved} puzzles solved</span>
+          {favourite ? <span>Favourite: {favourite.label}</span> : null}
+        </div>
       </section>
 
-      <section className="grid-4" aria-label="Career statistics">
-        <div className="stat-card">
+      <section className="home-stats" aria-label="Career statistics">
+        <div className="home-stat">
           <span className="stat-label">Rating</span>
           <span className="stat-value green">{profile.rating}</span>
-          <span className="tiny muted">Best {profile.bestRating}</span>
         </div>
-        <div className="stat-card">
+        <div className="home-stat">
           <span className="stat-label">Matches</span>
-          <span className="stat-value">{profile.matches}</span>
-          <span className="tiny muted">{profile.wins}W · {profile.losses}L · {profile.draws}D</span>
+          <span className="stat-value">{profile.matches}<small> {profile.wins}W · {profile.losses}L</small></span>
         </div>
-        <div className="stat-card">
+        <div className="home-stat">
           <span className="stat-label">Win rate</span>
           <span className="stat-value">{rate}%</span>
-          <span className="tiny muted">{profile.wins} victories</span>
         </div>
-        <div className="stat-card">
+        <div className="home-stat">
           <span className="stat-label">Streak</span>
-          <span className="stat-value">{profile.streak}</span>
-          <span className="tiny muted">Best {profile.bestStreak}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Playtime</span>
-          <span className="stat-value">{formatDuration(profile.playtimeMs)}</span>
-          <span className="tiny muted">Recorded match time</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Barriers placed</span>
-          <span className="stat-value">{profile.counters.wallsPlaced}</span>
-          <span className="tiny muted">Across all matches</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Puzzles</span>
-          <span className="stat-value">{profile.counters.puzzlesSolved}</span>
-          <span className="tiny muted">{profile.counters.puzzlesAttempted} attempts</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Favourite mode</span>
-          <span className="stat-value" style={{ fontSize: '1.15rem' }}>{favourite?.label ?? '—'}</span>
-          <span className="tiny muted">{favourite ? `${favourite.count} ${plural(favourite.count, 'match', 'matches')}` : 'No matches yet'}</span>
+          <span className="stat-value">{profile.streak}<small> best {profile.bestStreak}</small></span>
         </div>
       </section>
 
-      <section className="grid-2">
-        <div className="card">
-          <div className="card-title">Achievements</div>
-          <div className="grid-2">
-            {ACHIEVEMENTS.map((achievement) => {
-              const isUnlocked = profile.achievements[achievement.id] !== undefined;
+      <details className="quiet-details">
+        <summary>Achievements · {unlocked}/{ACHIEVEMENTS.length}</summary>
+        <div className="quiet-content grid-2">
+          {ACHIEVEMENTS.map((achievement) => {
+            const isUnlocked = profile.achievements[achievement.id] !== undefined;
+            return (
+              <div key={achievement.id} className={`achievement${isUnlocked ? '' : ' locked'}`}>
+                <div className="achievement-icon" aria-hidden="true">{achievement.glyph}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="list-title">{achievement.name}</div>
+                  <div className="list-sub">{achievement.description}</div>
+                </div>
+                <span className="visually-hidden">{isUnlocked ? 'Unlocked' : 'Locked'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </details>
+
+      <section className="panel">
+        <div className="card-title">Recent matches</div>
+        {profile.history.length === 0 ? (
+          <p className="empty-note">No matches yet. Start a local duel or challenge a bot.</p>
+        ) : (
+          <div className="list">
+            {profile.history.slice(0, 8).map((entry) => {
+              const modeName = entry.modeId === 'puzzle' ? 'Puzzle' : modeById(entry.modeId)?.name ?? entry.modeId;
+              const bot = entry.opponentBot ? botById(entry.opponentBot) : undefined;
               return (
-                <div key={achievement.id} className={`achievement${isUnlocked ? '' : ' locked'}`}>
-                  <div className="achievement-icon" aria-hidden="true">{achievement.glyph}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="list-title">{achievement.name}</div>
-                    <div className="list-sub">{achievement.description}</div>
+                <div key={entry.id} className="list-row">
+                  <span className={`pill ${entry.result === 'win' ? 'pill-green' : entry.result === 'loss' ? 'pill-red' : 'pill-gold'}`}>
+                    {entry.result === 'win' ? 'W' : entry.result === 'loss' ? 'L' : 'D'}
+                  </span>
+                  <div className="list-main">
+                    <div className="list-title">{modeName} · {entry.size}×{entry.size}</div>
+                    <div className="list-sub">
+                      vs {entry.opponentName}{bot ? ` (${bot.title})` : ''} · {entry.plies} {plural(entry.plies, 'ply', 'plies')} · {formatDate(entry.date)}
+                    </div>
                   </div>
-                  <span className="visually-hidden">{isUnlocked ? 'Unlocked' : 'Locked'}</span>
+                  <div className="small mono" style={{ textAlign: 'right' }}>
+                    <div>{entry.ratingAfter}</div>
+                    <div className={`tiny ${entry.ratingAfter > entry.ratingBefore ? 'green' : entry.ratingAfter < entry.ratingBefore ? 'red' : 'dim'}`}>
+                      {entry.ratingAfter === entry.ratingBefore
+                        ? 'unrated'
+                        : `${entry.ratingAfter > entry.ratingBefore ? '+' : ''}${entry.ratingAfter - entry.ratingBefore}`}
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
-        </div>
-
-        <div className="card">
-          <div className="row-between">
-            <div className="card-title" style={{ marginBottom: 0 }}>Recent matches</div>
-            <Link to="/leaderboard" className="small">Leaderboard</Link>
-          </div>
-          {profile.history.length === 0 ? (
-            <div className="empty-note">No matches yet. Start a local duel or challenge a bot.</div>
-          ) : (
-            <div className="list">
-              {profile.history.slice(0, 8).map((entry) => {
-                const modeName = entry.modeId === 'puzzle' ? 'Puzzle' : modeById(entry.modeId)?.name ?? entry.modeId;
-                const bot = entry.opponentBot ? botById(entry.opponentBot) : undefined;
-                return (
-                  <div key={entry.id} className="list-row">
-                    <span className={`pill ${entry.result === 'win' ? 'pill-green' : entry.result === 'loss' ? 'pill-red' : 'pill-gold'}`}>
-                      {entry.result === 'win' ? 'W' : entry.result === 'loss' ? 'L' : 'D'}
-                    </span>
-                    <div className="list-main">
-                      <div className="list-title">
-                        {modeName} · {entry.size}×{entry.size}
-                      </div>
-                      <div className="list-sub">
-                        vs {entry.opponentName}{bot ? ` (${bot.title})` : ''} · {entry.plies} plies · {formatDate(entry.date)}
-                      </div>
-                    </div>
-                    <div className="small mono" style={{ textAlign: 'right' }}>
-                      <div>{entry.ratingAfter}</div>
-                      <div className={`tiny ${entry.ratingAfter > entry.ratingBefore ? 'green' : entry.ratingAfter < entry.ratingBefore ? 'red' : 'dim'}`}>
-                        {entry.ratingAfter === entry.ratingBefore
-                          ? 'unrated'
-                          : `${entry.ratingAfter > entry.ratingBefore ? '+' : ''}${entry.ratingAfter - entry.ratingBefore}`}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <div className="divider" />
-          <div className="tiny dim">
-            Private analytics: playtime, billing and account details never appear on public profiles. Full
-            player insights arrive with accounts in Phase B.
-          </div>
-        </div>
+        )}
       </section>
+
+      <p className="tiny dim">
+        Profile data is stored locally on this device. Billing and private analytics never appear publicly.
+      </p>
     </div>
   );
 }

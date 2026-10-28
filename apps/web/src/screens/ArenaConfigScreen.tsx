@@ -142,7 +142,7 @@ export function ArenaConfigScreen() {
       </header>
 
       <div className="grid-2">
-        <div className="card stack">
+        <div className="panel stack">
           <div className="field">
             <label htmlFor="mode-select">Game mode</label>
             <select id="mode-select" value={modeId} onChange={(event) => chooseMode(event.target.value as ModeId)}>
@@ -295,7 +295,7 @@ export function ArenaConfigScreen() {
         </div>
 
         <div className="stack">
-          <div className="card">
+          <div className="panel">
             <div className="card-title">Preview</div>
             {preview ? <Board state={preview} /> : <div className="empty-note">Invalid configuration</div>}
             <div className="divider" />
@@ -318,21 +318,16 @@ export function ArenaConfigScreen() {
               </div>
             </div>
           </div>
-          <div className="card">
-            <div className="card-title">Rules in effect</div>
-            <ul className="small muted" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.65 }}>
-              <li>Move one square up, down, left or right — never diagonally.</li>
-              <li>Jump over an adjacent rival to the empty square beyond; if blocked, jump diagonally.</li>
-              <li>Barriers span two cells and cannot overlap, cross, or seal every route.</li>
-              <li>Blue wins on row 1 (top); Red wins on the bottom row.</li>
-              <li>Threefold repetition or the ply limit is a draw.</li>
-              <li>{tc && tc.initialMs > 0 ? 'Each player has their own clock; it runs only on their turn.' : 'No competitive clock in this match.'}</li>
-            </ul>
-          </div>
-          <div className="banner">
-            <strong>Unranked:</strong>
-            <span>Local and bot matches never change an online rating. Ranked online play arrives in Phase B.</span>
-          </div>
+          <details className="quiet-details">
+            <summary>Rules in effect</summary>
+            <div className="quiet-content small muted">
+              <p>Move one square or place a barrier. Barriers cannot overlap, cross or seal every route.</p>
+              <p>Jump an adjacent rival; diagonal jumps only when the straight landing is blocked.</p>
+              <p>Blue wins at the top row, Red at the bottom. Threefold repetition or the ply limit is a draw.</p>
+              <p>{tc && tc.initialMs > 0 ? 'Each player has their own clock; it runs only on their turn.' : 'No competitive clock in this match.'}</p>
+            </div>
+          </details>
+          <p className="tiny dim">Local and bot matches are unranked. Online play uses server-side Elo.</p>
         </div>
       </div>
     </div>

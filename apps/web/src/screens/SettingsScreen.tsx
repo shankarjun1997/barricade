@@ -55,7 +55,7 @@ export function SettingsScreen() {
       </header>
 
       <div className="grid-2">
-        <section className="card">
+        <section className="panel">
           <div className="card-title">Audio</div>
           <div className="toggle-row">
             <div>
@@ -93,12 +93,9 @@ export function SettingsScreen() {
               <output>{Math.round(settings.sfxVolume * 100)}%</output>
             </div>
           </div>
-          <div className="tiny dim" style={{ marginTop: 8 }}>
-            Reaction sounds, voice packs and separate music volume arrive with the messaging system in Phase B.
-          </div>
         </section>
 
-        <section className="card">
+        <section className="panel">
           <div className="card-title">Presentation</div>
           <div className="field" style={{ marginBottom: 14 }}>
             <label id="motion-label">Motion</label>
@@ -114,7 +111,6 @@ export function SettingsScreen() {
                 </button>
               ))}
             </div>
-            <span className="tiny dim">System respects your reduced-motion preference automatically.</span>
           </div>
           <div className="field">
             <label id="theme-label">Theme</label>
@@ -130,44 +126,23 @@ export function SettingsScreen() {
                 </button>
               ))}
             </div>
-            <span className="tiny dim">Palette changes only; piece shapes and letters always distinguish players.</span>
           </div>
         </section>
 
-        <section className="card">
-          <div className="card-title">Communication & privacy</div>
-          <ul className="small muted" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-            <li>Mute opponent, block and report — available with accounts.</li>
-            <li>Disable taunts while keeping respectful reactions.</li>
-            <li>Custom quick messages with filtering and rate limits.</li>
-            <li>Control who can send friend requests or see presence.</li>
-          </ul>
-          <div className="divider" />
-          <div className="tiny dim">
-            These controls are designed and scheduled for Phase B. They are not simulated here — no toggles
-            pretend to be active. Local matches have no chat.
-          </div>
-        </section>
 
-        <section className="card">
+        <section className="panel">
           <div className="card-title">Local data</div>
-          <p className="small muted">
-            Profile, settings and matches live in this browser's local storage. Export a copy or reset your
-            progress. Settings are preserved on reset.
-          </p>
           <div className="btn-row" style={{ marginTop: 12 }}>
             <button type="button" className="btn btn-ghost" onClick={exportData}>Export data</button>
             <button type="button" className="btn btn-danger" onClick={() => setConfirmReset(true)}>Reset progress</button>
           </div>
-          <div className="divider" />
-          <div className="tiny dim">
-            Account deletion, cloud sync and server-side analytics are part of the online platform. This
-            prototype collects nothing and sends nothing.
-          </div>
+          <p className="tiny dim" style={{ marginTop: 10 }}>
+            Local profile, settings and local matches are stored in this browser.
+          </p>
         </section>
       </div>
 
-      <section className="card">
+      <section className="panel">
         <div className="card-title">Online play</div>
         <div className="row-between small">
           <span className="muted">Game server</span>
@@ -191,11 +166,11 @@ export function SettingsScreen() {
         </div>
       </section>
 
-      <section className="card">
+      <section className="panel">
         <div className="card-title">About Barricade</div>
         <div className="row-between small">
           <span className="muted">Version</span>
-          <span>0.1.0 · Phase C prototype</span>
+          <span>0.3.0 · local + online</span>
         </div>
         <div className="row-between small" style={{ marginTop: 6 }}>
           <span className="muted">Engine</span>
@@ -209,11 +184,6 @@ export function SettingsScreen() {
           <span className="muted">Storage</span>
           <span>Browser local storage</span>
         </div>
-        <div className="divider" />
-        <p className="tiny dim">
-          Barricade is an original game and platform. Its rules are a public-domain-style abstract duel;
-          all branding, code, interface and audio are original to this project.
-        </p>
       </section>
 
       {confirmReset ? (

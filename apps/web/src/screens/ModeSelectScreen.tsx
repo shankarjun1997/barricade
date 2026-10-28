@@ -4,65 +4,41 @@ import { MODES, timeControlById } from '@barricade/engine';
 export function ModeSelectScreen() {
   return (
     <div className="stack">
-      <header className="page-head">
+      <header className="page-head compact-head">
         <div>
           <span className="eyebrow">Play</span>
-          <h1>Select a mode</h1>
-          <p className="page-sub">
-            Every mode runs on the same engine with its own arena, barrier stock and clock. Ranked rulesets
-            are fixed; custom matches are unranked.
-          </p>
+          <h1>Choose a mode</h1>
+          <p className="page-sub">Each mode sets the arena, barriers and clock. Rules stay identical.</p>
         </div>
         <Link className="btn btn-ghost" to="/bots">
-          Play a bot instead
+          Play a bot
         </Link>
       </header>
 
-      <div className="grid-3">
+      <div className="list-panel">
         {MODES.map((mode) => {
           const tc = timeControlById(mode.defaultTimeControl);
           return (
-            <article key={mode.id} className="mode-card">
-              <div className="mode-top">
-                <h2 style={{ fontSize: '1.1rem' }}>{mode.name}</h2>
-                <span className={`pill pill-${mode.accent === 'green' ? 'green' : mode.accent}`}>
-                  {mode.ranked ? 'Ranked-ready' : 'Casual'}
-                </span>
+            <Link key={mode.id} className="mode-row" to={`/config?mode=${mode.id}`}>
+              <div className="mode-row-main">
+                <strong>{mode.name}</strong>
+                <small>{mode.tagline}</small>
               </div>
-              <span className="tagline">{mode.tagline}</span>
-              <p className="small muted">{mode.description}</p>
-              <div className="mode-meta">
-                <span className="pill">{mode.arena.size}×{mode.arena.size}</span>
-                <span className="pill">{mode.arena.wallsPerPlayer} barriers</span>
-                {tc ? <span className="pill">{tc.label}</span> : null}
+              <div className="mode-row-meta small muted">
+                <span>{mode.arena.size}×{mode.arena.size}</span>
+                <span>{mode.arena.wallsPerPlayer} barriers</span>
+                {tc ? <span>{tc.label}</span> : null}
+                {!mode.ranked ? <span className="dim">Casual</span> : null}
               </div>
-              {mode.modifiers.length > 0 ? (
-                <div className="row" style={{ gap: 6 }}>
-                  {mode.modifiers.map((modifier) => (
-                    <span key={modifier} className="pill tiny">{modifier.replace(/-/g, ' ')}</span>
-                  ))}
-                </div>
-              ) : null}
-              <div className="btn-row" style={{ marginTop: 10 }}>
-                <Link className="btn btn-primary btn-sm" to={`/config?mode=${mode.id}`}>
-                  Configure
-                </Link>
-                <Link className="btn btn-ghost btn-sm" to={`/config?mode=${mode.id}&opponent=bot`}>
-                  vs Bot
-                </Link>
-              </div>
-            </article>
+              <span className="mode-row-chevron" aria-hidden="true">→</span>
+            </Link>
           );
         })}
       </div>
 
-      <div className="banner">
-        <strong>Fair play:</strong>
-        <span>
-          Ranked matches use fixed, validated rulesets. No purchase can add moves, barriers, extra time or
-          rating advantages.
-        </span>
-      </div>
+      <p className="tiny dim">
+        Ranked matches use fixed rulesets. Purchases can never add moves, barriers, time or rating advantages.
+      </p>
     </div>
   );
 }
