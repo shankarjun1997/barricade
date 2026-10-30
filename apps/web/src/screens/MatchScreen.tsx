@@ -3,17 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   agreeDraw,
   distanceToGoal,
+  legalWallMoves,
   modeById,
   resign,
   timeControlById,
   type Move,
   type Player,
+  type WallMove,
 } from '@barricade/engine';
 import { chooseBotMove } from '@barricade/bots';
 import { Board } from '../components/Board.js';
 import { Modal } from '../components/Modal.js';
 import { PlayerBar } from '../components/PlayerBar.js';
 import { useApp } from '../state/AppContext.js';
+import { useFixedMatchScreen } from '../lib/useFixedMatchScreen.js';
+import { useWallDrag } from '../lib/useWallDrag.js';
 import {
   blueMovesPlayed,
   clearMatch,
@@ -48,6 +52,9 @@ export function MatchScreen() {
   const settledRef = useRef<string | null>(null);
   const lastAction = useRef<{ ply: number; at: number }>({ ply: -1, at: 0 });
   const logRef = useRef<HTMLOListElement>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+
+  useFixedMatchScreen(Boolean(match));
 
   const update = useCallback((next: ActiveMatch) => {
     matchRef.current = next;
@@ -165,6 +172,31 @@ export function MatchScreen() {
     [sfx, toast, update],
   );
 
+  const dragLegalWalls = useMemo<WallMove[]>(() => {
+    if (!match || !canAct) return [];
+    return legalWallMoves(match.game, match.game.turn).filter((wall) => wall.orientation === orientation);
+  }, [match, canAct, orientation]);
+
+  const wallDrag = useWallDrag({
+    size: match?.game.config.size ?? 9,
+    orientation,
+    enabled: Boolean(match) && canAct && match!.game.wallsLeft[match!.game.turn] > 0,
+    legalWalls: dragLegalWalls,
+    boardRef,
+    onDrop: (move) => {
+      setMode('wall');
+      act(move);
+    },
+    onInvalid: () => {
+      sfx('invalid');
+      toast('That spot overlaps another barrier or seals a route. Use a highlighted slot.', 'error');
+    },
+    onTap: () => {
+      setMode('wall');
+      setOrientation((current) => (current === 'H' ? 'V' : 'H'));
+    },
+  });
+
   const handleUndo = useCallback(() => {
     const current = matchRef.current;
     if (!current || !current.allowUndo || current.game.result || current.failed) return;
@@ -192,6 +224,11 @@ export function MatchScreen() {
       if (key === 'v') {
         setOrientation('V');
         setMode('wall');
+      }
+      if (key === 'r') {
+        event.preventDefault();
+        setMode('wall');
+        setOrientation((current) => (current === 'H' ? 'V' : 'H'));
       }
       if (key === 'u') {
         event.preventDefault();
@@ -343,15 +380,20 @@ export function MatchScreen() {
           thinking={match.controller === 'bot' && match.game.turn === 'red' && !match.game.result}
         />
 
-        <Board
-          state={match.game}
-          interactive={canAct}
-          mode={mode}
-          wallOrientation={orientation}
-          onMove={(to) => act({ kind: 'move', to })}
-          onWall={(wallMove) => act(wallMove)}
-          lastMove={match.game.lastMove?.move ?? null}
-        />
+        <div className="board-slot">
+          <Board
+            boardRef={boardRef}
+            state={match.game}
+            interactive={canAct}
+            mode={mode}
+            wallOrientation={orientation}
+            onMove={(to) => act({ kind: 'move', to })}
+            onWall={(wallMove) => act(wallMove)}
+            lastMove={match.game.lastMove?.move ?? null}
+            dragging={wallDrag.dragging}
+            dragCandidate={wallDrag.candidate}
+          />
+        </div>
 
         <PlayerBar
           player="blue"
@@ -391,14 +433,41 @@ export function MatchScreen() {
               Barrier ({match.game.wallsLeft[match.game.turn]})
             </button>
           </div>
-          {mode === 'wall' ? (
-            <div className="segmented" role="group" aria-label="Barrier orientation">
-              <button type="button" aria-pressed={orientation === 'H'} onClick={() => setOrientation('H')}>
-                H
-              </button>
-              <button type="button" aria-pressed={orientation === 'V'} onClick={() => setOrientation('V')}>
-                V
-              </button>
+          {canAct && match.game.wallsLeft[match.game.turn] > 0 ? (
+            <div className="wall-tray" role="group" aria-label="Barrier tray">
+              <button
+                type="button"
+                className={`wall-tray-stick ${orientation === 'H' ? 'h' : 'v'}`}
+                onPointerDown={(event) => {
+                  setMode('wall');
+                  wallDrag.start(event);
+                }}
+                onClick={wallDrag.onClick}
+                aria-label={`Drag a ${orientation === 'H' ? 'horizontal' : 'vertical'} barrier onto the board. Click to rotate.`}
+                title={`Drag barrier · ${orientation === 'H' ? 'horizontal' : 'vertical'} (click to rotate)`}
+              />
+              <div className="segmented" role="group" aria-label="Barrier orientation">
+                <button
+                  type="button"
+                  aria-pressed={orientation === 'H'}
+                  onClick={() => {
+                    setOrientation('H');
+                    setMode('wall');
+                  }}
+                >
+                  H
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={orientation === 'V'}
+                  onClick={() => {
+                    setOrientation('V');
+                    setMode('wall');
+                  }}
+                >
+                  V
+                </button>
+              </div>
             </div>
           ) : null}
           <div className="dock-actions">
@@ -455,8 +524,8 @@ export function MatchScreen() {
             <span>Blue {match.game.wallsLeft.blue} · Red {match.game.wallsLeft.red}</span>
           </div>
           <div className="divider" />
-          <p>Move one square or place a barrier. A barrier cannot seal every route. Reach the far row to win.</p>
-          <p>Shortcuts: M move · W barrier · H/V orientation · U undo.</p>
+          <p>Move one square or drag a barrier onto a highlighted slot. A barrier cannot seal every route. Reach the far row to win.</p>
+          <p>Shortcuts: M move · W barrier · H/V orientation · R rotate · U undo.</p>
           <p>This match is stored on this device only. Refreshing is safe.</p>
           <button type="button" className="btn btn-sm btn-ghost" onClick={() => setModal('restart')}>
             Restart match

@@ -852,6 +852,13 @@ p {
   margin-inline: auto;
 }
 
+.board-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .board {
   position: relative;
   display: grid;
@@ -862,7 +869,7 @@ p {
   border: 1px solid var(--line);
   box-shadow: var(--shadow), inset 0 0 0 6px #0d1218;
   overflow: hidden;
-  touch-action: manipulation;
+  touch-action: none;
   user-select: none;
 }
 
@@ -1749,6 +1756,21 @@ tbody tr:hover {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55), 0 0 18px rgba(245, 196, 81, 0.7);
 }
 
+.wall-preview {
+  position: absolute;
+  border-radius: 999px;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(180deg, #ffe08a, var(--gold) 45%, #c79a2b);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 22px rgba(245, 196, 81, 0.75);
+  opacity: 0.9;
+}
+
+.wall-preview.invalid {
+  background: rgba(255, 93, 108, 0.7);
+  box-shadow: 0 0 0 2px rgba(255, 93, 108, 0.9), 0 0 18px rgba(255, 93, 108, 0.55);
+}
+
 @media (max-width: 760px) {
   .board-wrap {
     max-width: min(94vw, 520px);
@@ -2289,6 +2311,139 @@ a.compact-row:hover strong {
   display: flex;
   gap: 6px;
   margin-left: auto;
+}
+
+.wall-tray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.wall-tray-stick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wall-tray-stick::before {
+  content: '';
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe08a, var(--gold) 45%, #c79a2b);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.16s ease, width 0.16s ease, height 0.16s ease;
+}
+
+.wall-tray-stick.h::before {
+  width: 46px;
+  height: 9px;
+}
+
+.wall-tray-stick.v::before {
+  width: 9px;
+  height: 30px;
+}
+
+.wall-tray-stick:hover::before {
+  filter: brightness(1.1);
+  transform: scale(1.04);
+}
+
+.wall-tray-stick:active {
+  cursor: grabbing;
+}
+
+.wall-tray-stick:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+body.wall-dragging {
+  cursor: grabbing;
+}
+
+body.wall-dragging .board {
+  cursor: grabbing;
+}
+
+/* ── Fixed match viewport (no up/down scrolling while playing) ── */
+
+body.match-fixed {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body.match-fixed .shell {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.match-fixed .main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 14px;
+  padding-bottom: 0;
+}
+
+body.match-fixed .main > .stack {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 10px;
+  overflow: hidden;
+}
+
+body.match-fixed .main > .stack:has(details[open]) {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body.match-fixed .main > .stack:has(details[open]) .match-stage {
+  min-height: 300px;
+}
+
+body.match-fixed .match-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: min(100%, 640px);
+}
+
+body.match-fixed .board-slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  container-type: size;
+}
+
+body.match-fixed .board-slot .board-wrap {
+  width: clamp(120px, min(100cqw, calc(100cqh - 22px)), 600px);
+  max-width: 600px;
+}
+
+@supports not (container-type: size) {
+  body.match-fixed .board-slot .board-wrap {
+    width: min(calc(100dvh - 380px), 600px);
+  }
+}
+
+@media (max-width: 760px) {
+  body.match-fixed .main {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
 }
 
 .online-result-rating {

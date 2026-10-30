@@ -1,18 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { Move, Player } from '@barricade/engine';
-import { modeById, timeControlById } from '@barricade/engine';
+import type { Move, Player, WallMove } from '@barricade/engine';
+import { legalWallMoves, modeById, timeControlById } from '@barricade/engine';
 import { Board } from '../components/Board.js';
 import { Modal } from '../components/Modal.js';
 import { PlayerBar } from '../components/PlayerBar.js';
 import { useOnline } from '../online/OnlineProvider.js';
 import { useApp } from '../state/AppContext.js';
+import { useFixedMatchScreen } from '../lib/useFixedMatchScreen.js';
+import { useWallDrag } from '../lib/useWallDrag.js';
 import { createId } from '../lib/storage.js';
 import { describeMove, formatDuration, formatTimeControl, plural, reasonLabel } from '../lib/format.js';
 
 export function OnlineMatchScreen() {
   const navigate = useNavigate();
-  const { sfx } = useApp();
+  const { sfx, toast } = useApp();
   const online = useOnline();
   const { match, status, connect } = online;
 
@@ -91,10 +93,52 @@ export function OnlineMatchScreen() {
         setOrientation('V');
         setMode('wall');
       }
+      if (key === 'r') {
+        event.preventDefault();
+        setMode('wall');
+        setOrientation((current) => (current === 'H' ? 'V' : 'H'));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  const canAct = Boolean(match) && match!.status === 'active' && status === 'online' && match!.game.turn === match!.youAre && !pending;
+  const boardRef = useRef<HTMLDivElement | null>(null);
+
+  const sendMove = (move: Move) => {
+    if (!canAct || !match) return;
+    setPending(true);
+    online.move(match.id, move, createId('mv'));
+    sfx(move.kind === 'wall' ? 'wall' : 'move');
+  };
+
+  const dragLegalWalls = useMemo<WallMove[]>(() => {
+    if (!match || !canAct) return [];
+    return legalWallMoves(match.game, match.game.turn).filter((wall) => wall.orientation === orientation);
+  }, [match, canAct, orientation]);
+
+  const wallDrag = useWallDrag({
+    size: match?.game.config.size ?? 9,
+    orientation,
+    enabled: Boolean(match) && canAct && match!.game.wallsLeft[match!.game.turn] > 0,
+    legalWalls: dragLegalWalls,
+    boardRef,
+    onDrop: (move) => {
+      setMode('wall');
+      sendMove(move);
+    },
+    onInvalid: () => {
+      sfx('invalid');
+      toast('That spot overlaps another barrier or seals a route. Use a highlighted slot.', 'error');
+    },
+    onTap: () => {
+      setMode('wall');
+      setOrientation((current) => (current === 'H' ? 'V' : 'H'));
+    },
+  });
+
+  useFixedMatchScreen(Boolean(match));
 
   if (!match) {
     return (
@@ -134,7 +178,6 @@ export function OnlineMatchScreen() {
 
   const finished = match.status === 'finished';
   const active = match.status === 'active';
-  const canAct = active && status === 'online' && match.game.turn === match.youAre && !pending;
   const forfeitIn = presence.reconnectDeadline ? Math.max(0, presence.reconnectDeadline - liveServerNow) : null;
   const isMyTurn = active && match.game.turn === match.youAre;
   const modeInfo = modeById(match.modeId);
@@ -154,13 +197,6 @@ export function OnlineMatchScreen() {
   const incomingDraw = online.drawOffer?.matchId === match.id ? online.drawOffer : null;
   const rematchRequestedByMe = online.rematchRequests.some((player) => player.id === you.id);
   const rematchRequestedByOpponent = online.rematchRequests.some((player) => player.id !== you.id);
-
-  const sendMove = (move: Move) => {
-    if (!canAct) return;
-    setPending(true);
-    online.move(match.id, move, createId('mv'));
-    sfx(move.kind === 'wall' ? 'wall' : 'move');
-  };
 
   const backToLobby = () => {
     online.leaveMatch(match.id);
@@ -314,15 +350,20 @@ export function OnlineMatchScreen() {
           active={active && match.game.turn === opponentColor}
         />
 
-        <Board
-          state={match.game}
-          interactive={canAct}
-          mode={mode}
-          wallOrientation={orientation}
-          onMove={(to) => sendMove({ kind: 'move', to })}
-          onWall={(wallMove) => sendMove(wallMove)}
-          lastMove={match.game.lastMove?.move ?? null}
-        />
+        <div className="board-slot">
+          <Board
+            boardRef={boardRef}
+            state={match.game}
+            interactive={canAct}
+            mode={mode}
+            wallOrientation={orientation}
+            onMove={(to) => sendMove({ kind: 'move', to })}
+            onWall={(wallMove) => sendMove(wallMove)}
+            lastMove={match.game.lastMove?.move ?? null}
+            dragging={wallDrag.dragging}
+            dragCandidate={wallDrag.candidate}
+          />
+        </div>
 
         <PlayerBar
           player={match.youAre}
@@ -359,10 +400,41 @@ export function OnlineMatchScreen() {
               Barrier ({match.game.wallsLeft[match.game.turn]})
             </button>
           </div>
-          {mode === 'wall' ? (
-            <div className="segmented" role="group" aria-label="Barrier orientation">
-              <button type="button" aria-pressed={orientation === 'H'} onClick={() => setOrientation('H')}>H</button>
-              <button type="button" aria-pressed={orientation === 'V'} onClick={() => setOrientation('V')}>V</button>
+          {canAct && match.game.wallsLeft[match.game.turn] > 0 ? (
+            <div className="wall-tray" role="group" aria-label="Barrier tray">
+              <button
+                type="button"
+                className={`wall-tray-stick ${orientation === 'H' ? 'h' : 'v'}`}
+                onPointerDown={(event) => {
+                  setMode('wall');
+                  wallDrag.start(event);
+                }}
+                onClick={wallDrag.onClick}
+                aria-label={`Drag a ${orientation === 'H' ? 'horizontal' : 'vertical'} barrier onto the board. Click to rotate.`}
+                title={`Drag barrier · ${orientation === 'H' ? 'horizontal' : 'vertical'} (click to rotate)`}
+              />
+              <div className="segmented" role="group" aria-label="Barrier orientation">
+                <button
+                  type="button"
+                  aria-pressed={orientation === 'H'}
+                  onClick={() => {
+                    setOrientation('H');
+                    setMode('wall');
+                  }}
+                >
+                  H
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={orientation === 'V'}
+                  onClick={() => {
+                    setOrientation('V');
+                    setMode('wall');
+                  }}
+                >
+                  V
+                </button>
+              </div>
             </div>
           ) : null}
           <div className="dock-actions">
@@ -406,8 +478,8 @@ export function OnlineMatchScreen() {
           <div className="row-between"><span>Room</span><span>{match.roomCode ?? 'Global'}</span></div>
           <div className="row-between"><span>Connection</span><span>{status}</span></div>
           <div className="divider" />
-          <p>Move one square or place a barrier. A barrier cannot seal every route. Reach the far row to win.</p>
-          <p>Shortcuts: M move · W barrier · H/V orientation. Undo is disabled online.</p>
+          <p>Move one square or drag a barrier onto a highlighted slot. A barrier cannot seal every route. Reach the far row to win.</p>
+          <p>Shortcuts: M move · W barrier · H/V orientation · R rotate. Undo is disabled online.</p>
         </div>
       </details>
 

@@ -101,6 +101,9 @@ Web client ── WebSocket /ws ──► Fastify server ──► Hub (authorit
   diagonally to either side instead.
 - Barriers span two cells. They cannot overlap, cross, sit off the board, exceed your stock, or remove
   every route to a goal for either player.
+- Drag the barrier stick from the dock onto a highlighted slot, or click a slot directly. Click the
+  stick (or press `R`) to rotate between horizontal and vertical. One barrier is placed per turn.
+- The match screen is locked to the viewport — it never scrolls up or down while you play.
 - Reaching the far row wins. Threefold repetition or the ply limit is a draw. Resign, draw agreement and
   clock timeout are explicit, separate outcomes.
 
@@ -152,10 +155,10 @@ Current suites:
 | Server hub + WebSocket/HTTP integration | 24 |
 | **Total** | **104** |
 
-Browser smoke coverage: local match → barriers → undo → resign → result → rematch → refresh restore →
-bot match → puzzle solve → settings → mobile; and online rooms → invite link → server moves → resignation
-→ Elo → colour-swapped rematch → disconnect/reconnect → global matchmaking → mobile. Both run with zero
-console errors and no horizontal overflow at 390 px.
+Browser smoke coverage: local match → click barrier → undo → drag barrier (H/V, preview) → undo →
+resign → result → rematch → refresh restore → bot match → puzzle solve → settings → mobile; and online
+rooms → invite link → server moves → resignation → Elo → colour-swapped rematch → disconnect/reconnect →
+global matchmaking → mobile. Both run with zero console errors and no horizontal overflow at 390 px.
 
 **Production online verification (2026-10-27):** two isolated Chrome contexts completed the full flow
 against `wss://barricade-w45u.onrender.com/ws` from https://barricade-ruby.vercel.app — room creation,

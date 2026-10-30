@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type RefObject } from 'react';
 import {
   legalPawnMoves,
   legalWallMoves,
@@ -18,6 +18,9 @@ interface BoardProps {
   readonly onWall?: (move: WallMove) => void;
   readonly lastMove?: Move | null;
   readonly mini?: boolean;
+  readonly boardRef?: RefObject<HTMLDivElement | null>;
+  readonly dragging?: boolean;
+  readonly dragCandidate?: { readonly r: number; readonly c: number; readonly valid: boolean } | null;
 }
 
 const WALL_THICKNESS = 2.4;
@@ -25,6 +28,22 @@ const SLOT_THICKNESS = 5;
 
 function pointKey(r: number, c: number): string {
   return `${r},${c}`;
+}
+
+function wallStyle(orientation: 'H' | 'V', r: number, c: number, cell: number, thickness: number) {
+  return orientation === 'H'
+    ? {
+        left: `${c * cell}%`,
+        top: `${(r + 1) * cell - thickness / 2}%`,
+        width: `${2 * cell}%`,
+        height: `${thickness}%`,
+      }
+    : {
+        left: `${(c + 1) * cell - thickness / 2}%`,
+        top: `${r * cell}%`,
+        width: `${thickness}%`,
+        height: `${2 * cell}%`,
+      };
 }
 
 export function Board({
@@ -36,6 +55,9 @@ export function Board({
   onWall,
   lastMove = null,
   mini = false,
+  boardRef,
+  dragging = false,
+  dragCandidate = null,
 }: BoardProps) {
   const size = state.config.size;
   const cell = 100 / size;
@@ -44,7 +66,7 @@ export function Board({
     const points = new Set<string>();
     const walls: WallMove[] = [];
     if (interactive && !state.result) {
-      if (mode === 'move') {
+      if (mode === 'move' && !dragging) {
         for (const point of legalPawnMoves(state)) points.add(pointKey(point.r, point.c));
       } else {
         for (const move of legalWallMoves(state)) {
@@ -53,7 +75,7 @@ export function Board({
       }
     }
     return { legalPoints: points, legalWalls: walls };
-  }, [state, interactive, mode, wallOrientation]);
+  }, [state, interactive, mode, wallOrientation, dragging]);
 
   const lastPawnTarget =
     lastMove?.kind === 'move' ? pointKey(lastMove.to.r, lastMove.to.c) : null;
@@ -107,46 +129,25 @@ export function Board({
   const wallEls = state.walls.map((w, index) => {
     const key = `${w.orientation}${w.r},${w.c}`;
     const isLast = key === lastWallKey;
-    const style =
-      w.orientation === 'H'
-        ? {
-            left: `${w.c * cell}%`,
-            top: `${(w.r + 1) * cell - WALL_THICKNESS / 2}%`,
-            width: `${2 * cell}%`,
-            height: `${WALL_THICKNESS}%`,
-          }
-        : {
-            left: `${(w.c + 1) * cell - WALL_THICKNESS / 2}%`,
-            top: `${w.r * cell}%`,
-            width: `${WALL_THICKNESS}%`,
-            height: `${2 * cell}%`,
-          };
-    return <div key={`${key}-${index}`} className={`wall${isLast ? ' last' : ''}`} style={style} aria-hidden="true" />;
+    return (
+      <div
+        key={`${key}-${index}`}
+        className={`wall${isLast ? ' last' : ''}`}
+        style={wallStyle(w.orientation, w.r, w.c, cell, WALL_THICKNESS)}
+        aria-hidden="true"
+      />
+    );
   });
 
   const slotEls = legalWalls.map((w) => {
     const key = `${w.orientation}${w.r},${w.c}`;
-    const style =
-      w.orientation === 'H'
-        ? {
-            left: `${w.c * cell}%`,
-            top: `${(w.r + 1) * cell - SLOT_THICKNESS / 2}%`,
-            width: `${2 * cell}%`,
-            height: `${SLOT_THICKNESS}%`,
-          }
-        : {
-            left: `${(w.c + 1) * cell - SLOT_THICKNESS / 2}%`,
-            top: `${w.r * cell}%`,
-            width: `${SLOT_THICKNESS}%`,
-            height: `${2 * cell}%`,
-          };
     const label = `Place ${w.orientation === 'H' ? 'horizontal' : 'vertical'} barrier at ${columnName(w.c)}${size - w.r}`;
     return (
       <button
         key={`slot-${key}`}
         type="button"
         className="wall-slot"
-        style={style}
+        style={wallStyle(w.orientation, w.r, w.c, cell, SLOT_THICKNESS)}
         aria-label={label}
         title={label}
         onClick={() => onWall?.(w)}
@@ -154,12 +155,21 @@ export function Board({
     );
   });
 
+  const previewEl = dragCandidate ? (
+    <div
+      className={`wall-preview${dragCandidate.valid ? '' : ' invalid'}`}
+      style={wallStyle(wallOrientation, dragCandidate.r, dragCandidate.c, cell, WALL_THICKNESS)}
+      aria-hidden="true"
+    />
+  ) : null;
+
   const boardLabel = `${size} by ${size} Barricade board. Blue at ${columnName(state.pawns.blue.c)}${size - state.pawns.blue.r}. Red at ${columnName(state.pawns.red.c)}${size - state.pawns.red.r}.`;
 
   return (
     <div className={`board-wrap${mini ? ' mini' : ''}`}>
       <div
-        className="board"
+        ref={boardRef}
+        className={`board${dragging ? ' dragging' : ''}`}
         style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
         role="grid"
         aria-label={boardLabel}
@@ -169,6 +179,7 @@ export function Board({
         {cells}
         {wallEls}
         {slotEls}
+        {previewEl}
       </div>
       <div className="board-coords" aria-hidden="true">
         <span className="blue">Blue races up</span>

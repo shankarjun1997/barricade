@@ -122,6 +122,55 @@ try {
   await page.waitForTimeout(200);
   assert.equal(await page.locator('.wall').count(), 0, 'undo should remove the barrier');
 
+  step('Drag a barrier onto the board');
+  assert.equal(
+    await page.evaluate(() => document.body.classList.contains('match-fixed')),
+    true,
+    'match screen should lock the viewport',
+  );
+  await page.mouse.wheel(0, 600);
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(() => window.scrollY), 0, 'match screen must not scroll while playing');
+  await page.keyboard.press('h');
+  const stick = await page.locator('.wall-tray-stick').boundingBox();
+  const dragSlots = page.locator('.wall-slot');
+  assert.ok((await dragSlots.count()) > 10, 'drag targets should be available');
+  const dragTarget = dragSlots.nth(20);
+  const dragBox = await dragTarget.boundingBox();
+  assert.ok(stick && dragBox, 'stick and drag target need boxes');
+  await page.mouse.move(stick.x + stick.width / 2, stick.y + stick.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + dragBox.height / 2, { steps: 12 });
+  await page.waitForTimeout(120);
+  assert.equal(await page.locator('.wall-preview').count(), 1, 'drag should show a placement preview');
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator('.wall').count(), 1, 'dragged barrier should be placed');
+  await page.getByText(/Rival to move/).waitFor();
+  await page.getByRole('button', { name: 'Undo' }).first().click();
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('.wall').count(), 0, 'undo should remove the dragged barrier');
+
+  await page.keyboard.press('v');
+  const vStick = await page.locator('.wall-tray-stick').boundingBox();
+  const vSlots = page.locator('.wall-slot');
+  const vBox = await vSlots.nth(20).boundingBox();
+  assert.ok(vStick && vBox, 'vertical stick and target need boxes');
+  await page.mouse.move(vStick.x + vStick.width / 2, vStick.y + vStick.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(vBox.x + vBox.width / 2, vBox.y + vBox.height / 2, { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator('.wall').count(), 1, 'vertical barrier should be placed');
+  const vertical = await page.locator('.wall').first().evaluate((el) => {
+    const rect = el.getBoundingClientRect();
+    return rect.height > rect.width;
+  });
+  assert.equal(vertical, true, 'barrier should be vertical');
+  await page.getByRole('button', { name: 'Undo' }).first().click();
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('.wall').count(), 0, 'undo should remove the vertical barrier');
+
   await page.getByRole('button', { name: 'Resign' }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Resign' }).click();
   await page.waitForURL('**/result');
