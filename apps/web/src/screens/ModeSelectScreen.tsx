@@ -8,7 +8,7 @@ export function ModeSelectScreen() {
         <div>
           <span className="eyebrow">Play</span>
           <h1>Choose a mode</h1>
-          <p className="page-sub">Each mode sets the arena, barriers and clock. Rules stay identical.</p>
+          <p className="page-sub">Each mode sets the arena, walls and clock. Rules stay identical.</p>
         </div>
         <Link className="btn btn-ghost" to="/bots">
           Play a bot
@@ -26,7 +26,7 @@ export function ModeSelectScreen() {
               </div>
               <div className="mode-row-meta small muted">
                 <span>{mode.arena.size}×{mode.arena.size}</span>
-                <span>{mode.arena.wallsPerPlayer} barriers</span>
+                <span>{mode.arena.wallsPerPlayer} walls</span>
                 {tc ? <span>{tc.label}</span> : null}
                 {!mode.ranked ? <span className="dim">Casual</span> : null}
               </div>
@@ -37,7 +37,7 @@ export function ModeSelectScreen() {
       </div>
 
       <p className="tiny dim">
-        Ranked matches use fixed rulesets. Purchases can never add moves, barriers, time or rating advantages.
+        Ranked matches use fixed rulesets. Purchases can never add moves, walls, time or rating advantages.
       </p>
     </div>
   );

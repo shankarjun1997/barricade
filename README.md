@@ -1,7 +1,7 @@
 # Barricade
 
-A competitive grid-duel game — race your piece to the far side while placing barriers to bend your
-rival's route.
+A competitive grid-duel game — race your piece to the rival's home space while placing walls to bend
+their path.
 
 **Web app:** https://barricade-ruby.vercel.app
 **Game server:** live at https://barricade-w45u.onrender.com (Render Free — it sleeps when idle and its
@@ -94,22 +94,34 @@ Web client ── WebSocket /ws ──► Fastify server ──► Hub (authorit
 
 ## Rules
 
-- Board is `N × N`. Blue starts bottom-centre and races to the top row; Red starts top-centre and
-  races to the bottom row.
-- On your turn, either move one square orthogonally, or place one barrier.
-- Adjacent rival: jump straight over them; if the landing is off-board or behind a barrier, jump
-  diagonally to either side instead.
-- Barriers span two cells. They cannot overlap, cross, sit off the board, exceed your stock, or remove
-  every route to a goal for either player.
-- Drag the barrier stick from the dock onto a highlighted slot, or click a slot directly. Click the
-  stick (or press `R`) to rotate between horizontal and vertical. One barrier is placed per turn.
-- The match screen is locked to the viewport — it never scrolls up or down while you play.
-- Reaching the far row wins. Threefold repetition or the ply limit is a draw. Resign, draw agreement and
-  clock timeout are explicit, separate outcomes.
+Standard Blockade rules (the target ruleset for this build):
+
+- Object: race a pawn onto your opponent’s home space.
+- Movement: move a pawn two spaces orthogonally (forward, backward or sideways) or one space
+  diagonally, provided the path is clear. Pawns cannot share a space; if blocked, a pawn may move one
+  space, and adjacent pawns can be jumped.
+- Walls: end your turn by placing a wall in an open board groove if one is available. Blue walls lie
+  horizontally and green walls lie vertically; each wall blocks two spaces.
+- Open paths: home spaces can never be completely enclosed, so each player always keeps at least one
+  open path. Once your wall supply is exhausted, keep taking turns by moving pawns only.
+- Reaching the opponent’s home space wins. Resign, draw agreement and clock timeout are explicit,
+  separate outcomes.
+
+> **Ruleset status:** the web engine currently still resolves the previous one-step movement rules
+> (move **or** wall, either orientation, reach the far row). The Blockade movement/turn update ships
+> next; the instructions and match UI already describe the target standard.
+
+## Controls
+
+- Drag either wall piece from the wall picker onto a highlighted groove, or click a highlighted groove.
+- Tap **Horizontal** / **Vertical** (or press `H` / `V`) to choose a wall, `M` to return to pawn
+  movement, `U` to undo, and `R` to rotate the selected wall.
+- The match screen is locked to the viewport and never scrolls up or down while you play.
+- **Options** in the match opens the full Blockade rules, move log and match details.
 
 ## Modes
 
-| Mode | Arena | Barriers each | Default clock |
+| Mode | Arena | Walls each | Default clock |
 | --- | --- | --- | --- |
 | Sprint | 7×7 | 5 | Sprint 1:00 |
 | Dash | 9×9 | 10 | Dash 3:00 +1s |
@@ -155,7 +167,7 @@ Current suites:
 | Server hub + WebSocket/HTTP integration | 24 |
 | **Total** | **104** |
 
-Browser smoke coverage: local match → click barrier → undo → drag barrier (H/V, preview) → undo →
+Browser smoke coverage: local match → click wall → undo → drag wall (H/V, preview) → undo →
 resign → result → rematch → refresh restore → bot match → puzzle solve → settings → mobile; and online
 rooms → invite link → server moves → resignation → Elo → colour-swapped rematch → disconnect/reconnect →
 global matchmaking → mobile. Both run with zero console errors and no horizontal overflow at 390 px.

@@ -123,7 +123,7 @@ export function ResultScreen() {
             <span className="stat-value">{summary.plies}</span>
           </div>
           <div className="result-stat">
-            <span className="stat-label">Barriers</span>
+            <span className="stat-label">Walls</span>
             <span className="stat-value">{summary.wallsPlaced}</span>
           </div>
           <div className="result-stat">

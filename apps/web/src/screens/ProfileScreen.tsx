@@ -89,7 +89,7 @@ export function ProfileScreen() {
         <div className="divider" />
         <div className="row small muted" style={{ gap: 14, flexWrap: 'wrap' }}>
           <span>{formatDuration(profile.playtimeMs)} played</span>
-          <span>{profile.counters.wallsPlaced} barriers</span>
+          <span>{profile.counters.wallsPlaced} walls</span>
           <span>{profile.counters.puzzlesSolved} puzzles solved</span>
           {favourite ? <span>Favourite: {favourite.label}</span> : null}
         </div>

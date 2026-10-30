@@ -20,7 +20,9 @@ interface BoardProps {
   readonly mini?: boolean;
   readonly boardRef?: RefObject<HTMLDivElement | null>;
   readonly dragging?: boolean;
-  readonly dragCandidate?: { readonly r: number; readonly c: number; readonly valid: boolean } | null;
+  readonly dragCandidate?:
+    | { readonly r: number; readonly c: number; readonly orientation: 'H' | 'V'; readonly valid: boolean }
+    | null;
 }
 
 const WALL_THICKNESS = 2.4;
@@ -66,9 +68,8 @@ export function Board({
     const points = new Set<string>();
     const walls: WallMove[] = [];
     if (interactive && !state.result) {
-      if (mode === 'move' && !dragging) {
-        for (const point of legalPawnMoves(state)) points.add(pointKey(point.r, point.c));
-      } else {
+      for (const point of legalPawnMoves(state)) points.add(pointKey(point.r, point.c));
+      if (mode === 'wall' || dragging) {
         for (const move of legalWallMoves(state)) {
           if (move.orientation === wallOrientation) walls.push(move);
         }
@@ -132,7 +133,7 @@ export function Board({
     return (
       <div
         key={`${key}-${index}`}
-        className={`wall${isLast ? ' last' : ''}`}
+        className={`wall wall-${w.orientation.toLowerCase()}${isLast ? ' last' : ''}`}
         style={wallStyle(w.orientation, w.r, w.c, cell, WALL_THICKNESS)}
         aria-hidden="true"
       />
@@ -141,12 +142,12 @@ export function Board({
 
   const slotEls = legalWalls.map((w) => {
     const key = `${w.orientation}${w.r},${w.c}`;
-    const label = `Place ${w.orientation === 'H' ? 'horizontal' : 'vertical'} barrier at ${columnName(w.c)}${size - w.r}`;
+    const label = `Place ${w.orientation === 'H' ? 'horizontal' : 'vertical'} wall at ${columnName(w.c)}${size - w.r}`;
     return (
       <button
         key={`slot-${key}`}
         type="button"
-        className="wall-slot"
+        className={`wall-slot wall-slot-${w.orientation.toLowerCase()}`}
         style={wallStyle(w.orientation, w.r, w.c, cell, SLOT_THICKNESS)}
         aria-label={label}
         title={label}
@@ -157,8 +158,10 @@ export function Board({
 
   const previewEl = dragCandidate ? (
     <div
-      className={`wall-preview${dragCandidate.valid ? '' : ' invalid'}`}
-      style={wallStyle(wallOrientation, dragCandidate.r, dragCandidate.c, cell, WALL_THICKNESS)}
+      className={`wall-preview wall-preview-${dragCandidate.orientation.toLowerCase()}${
+        dragCandidate.valid ? '' : ' invalid'
+      }`}
+      style={wallStyle(dragCandidate.orientation, dragCandidate.r, dragCandidate.c, cell, WALL_THICKNESS)}
       aria-hidden="true"
     />
   ) : null;

@@ -6,6 +6,7 @@ export type WallOrientation = 'H' | 'V';
 export interface WallDragCandidate {
   readonly r: number;
   readonly c: number;
+  readonly orientation: WallOrientation;
   readonly valid: boolean;
 }
 
@@ -30,6 +31,7 @@ interface InternalDrag {
   readonly inside: boolean;
   readonly r: number;
   readonly c: number;
+  readonly orientation: WallOrientation;
 }
 
 const MOVE_THRESHOLD = 6;
@@ -73,7 +75,7 @@ export function useWallDrag(options: UseWallDragOptions) {
   }, []);
 
   const start = useCallback(
-    (event: ReactPointerEvent<HTMLElement>) => {
+    (event: ReactPointerEvent<HTMLElement>, dragOrientation?: WallOrientation) => {
       if (!optionsRef.current.enabled) return;
       if (dragRef.current) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -91,6 +93,7 @@ export function useWallDrag(options: UseWallDragOptions) {
         inside: false,
         r: 0,
         c: 0,
+        orientation: dragOrientation ?? optionsRef.current.orientation,
       });
     },
     [setDragState],
@@ -128,7 +131,7 @@ export function useWallDrag(options: UseWallDragOptions) {
       suppressClick.current = true;
       optionsRef.current.onDragEnd?.();
       if (!current.inside) return;
-      const move: WallMove = { kind: 'wall', orientation: optionsRef.current.orientation, r: current.r, c: current.c };
+      const move: WallMove = { kind: 'wall', orientation: current.orientation, r: current.r, c: current.c };
       const valid = optionsRef.current.legalWalls.some(
         (wall) => wall.orientation === move.orientation && wall.r === move.r && wall.c === move.c,
       );
@@ -166,8 +169,9 @@ export function useWallDrag(options: UseWallDragOptions) {
       ? {
           r: drag.r,
           c: drag.c,
+          orientation: drag.orientation,
           valid: options.legalWalls.some(
-            (wall) => wall.orientation === options.orientation && wall.r === drag.r && wall.c === drag.c,
+            (wall) => wall.orientation === drag.orientation && wall.r === drag.r && wall.c === drag.c,
           ),
         }
       : null;

@@ -52,7 +52,7 @@ export function titleCase(value: string): string {
 export function reasonLabel(reason: string): string {
   switch (reason) {
     case 'goal':
-      return 'Reached the far side';
+      return 'Reached the home space';
     case 'resign':
       return 'Opponent resigned';
     case 'timeout':

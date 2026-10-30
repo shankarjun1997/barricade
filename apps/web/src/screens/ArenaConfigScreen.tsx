@@ -134,7 +134,7 @@ export function ArenaConfigScreen() {
         <div>
           <span className="eyebrow">Arena configuration</span>
           <h1>Set the terms</h1>
-          <p className="page-sub">Configure the board, barrier stock and clock. Preview the exact ruleset before you start.</p>
+          <p className="page-sub">Configure the board, wall stock and clock. Preview the exact ruleset before you start.</p>
         </div>
         <button type="button" className="btn btn-ghost" onClick={() => navigate('/play')}>
           Change mode
@@ -210,7 +210,7 @@ export function ArenaConfigScreen() {
           </div>
 
           <div className="field">
-            <label htmlFor="walls-range">Barriers per player</label>
+            <label htmlFor="walls-range">Walls per player</label>
             <div className="range-row">
               <input
                 id="walls-range"
@@ -224,10 +224,10 @@ export function ArenaConfigScreen() {
             </div>
             <span className="tiny muted">
               {walls === 0
-                ? 'No barriers — a pure race.'
+                ? 'No walls — a pure race.'
                 : walls > 14
-                  ? 'Barrier-heavy: expect slower, grindier matches.'
-                  : 'Each player may place this many barriers before their stock runs dry.'}
+                  ? 'Wall-heavy: expect slower, grindier matches.'
+                  : 'Each player may place this many walls before their stock runs dry.'}
             </span>
           </div>
 
@@ -302,7 +302,7 @@ export function ArenaConfigScreen() {
             <div className="grid-2 small">
               <div>
                 <div className="muted tiny">Arena</div>
-                <div>{size}×{size} · {walls} barriers each</div>
+                <div>{size}×{size} · {walls} walls each</div>
               </div>
               <div>
                 <div className="muted tiny">Clock</div>
@@ -321,10 +321,11 @@ export function ArenaConfigScreen() {
           <details className="quiet-details">
             <summary>Rules in effect</summary>
             <div className="quiet-content small muted">
-              <p>Move one square or place a barrier. Barriers cannot overlap, cross or seal every route.</p>
-              <p>Jump an adjacent rival; diagonal jumps only when the straight landing is blocked.</p>
-              <p>Blue wins at the top row, Red at the bottom. Threefold repetition or the ply limit is a draw.</p>
+              <p>Race a pawn onto the opponent’s home space. Move two spaces orthogonally or one diagonally, then place a wall if you have one.</p>
+              <p>Walls cannot overlap, cross or seal every route. Blue walls are horizontal, green walls are vertical; each wall blocks two spaces.</p>
+              <p>Home spaces always keep an open path. Once your wall supply runs out, keep taking turns by moving pawns only.</p>
               <p>{tc && tc.initialMs > 0 ? 'Each player has their own clock; it runs only on their turn.' : 'No competitive clock in this match.'}</p>
+              <p className="tiny dim">Blockade movement is the target ruleset; this build currently resolves one-step pawn moves while the engine migration ships.</p>
             </div>
           </details>
           <p className="tiny dim">Local and bot matches are unranked. Online play uses server-side Elo.</p>

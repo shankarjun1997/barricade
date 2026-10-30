@@ -13,11 +13,14 @@ import {
 } from '@barricade/engine';
 import { chooseBotMove } from '@barricade/bots';
 import { Board } from '../components/Board.js';
+import { BackIcon, DrawIcon, FlagIcon, OptionsIcon, SignalIcon, UndoIcon } from '../components/GameIcons.js';
+import { GameOptions } from '../components/GameOptions.js';
 import { Modal } from '../components/Modal.js';
 import { PlayerBar } from '../components/PlayerBar.js';
 import { useApp } from '../state/AppContext.js';
 import { useFixedMatchScreen } from '../lib/useFixedMatchScreen.js';
 import { useWallDrag } from '../lib/useWallDrag.js';
+import { BLOCKADE_RULES, BLOCKADE_RULES_SUMMARY } from '../lib/rules.js';
 import {
   blueMovesPlayed,
   clearMatch,
@@ -48,6 +51,7 @@ export function MatchScreen() {
   const [mode, setMode] = useState<'move' | 'wall'>('move');
   const [orientation, setOrientation] = useState<'H' | 'V'>('H');
   const [modal, setModal] = useState<ModalKind>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [settling, setSettling] = useState(false);
   const settledRef = useRef<string | null>(null);
   const lastAction = useRef<{ ply: number; at: number }>({ ply: -1, at: 0 });
@@ -174,8 +178,8 @@ export function MatchScreen() {
 
   const dragLegalWalls = useMemo<WallMove[]>(() => {
     if (!match || !canAct) return [];
-    return legalWallMoves(match.game, match.game.turn).filter((wall) => wall.orientation === orientation);
-  }, [match, canAct, orientation]);
+    return legalWallMoves(match.game, match.game.turn);
+  }, [match, canAct]);
 
   const wallDrag = useWallDrag({
     size: match?.game.config.size ?? 9,
@@ -189,11 +193,7 @@ export function MatchScreen() {
     },
     onInvalid: () => {
       sfx('invalid');
-      toast('That spot overlaps another barrier or seals a route. Use a highlighted slot.', 'error');
-    },
-    onTap: () => {
-      setMode('wall');
-      setOrientation((current) => (current === 'H' ? 'V' : 'H'));
+      toast('That spot overlaps another wall or seals a route. Use a highlighted slot.', 'error');
     },
   });
 
@@ -334,204 +334,238 @@ export function MatchScreen() {
   }
 
   const hasClock = match.initialMs > 0;
+  const canPlaceWall = canAct && match.game.wallsLeft[match.game.turn] > 0;
+  const gameLabel = match.controller === 'puzzle' ? 'PUZZLE' : match.controller === 'bot' ? 'VS BOT' : 'LOCAL';
+  const gameSub = `${modeInfo?.name ?? 'Match'} · ${match.game.config.size}×${match.game.config.size}`;
+  const opponentRating = match.controller === 'bot' && match.bot ? match.bot.rating : undefined;
+  const leaveMatch = () => navigate(match.controller === 'puzzle' ? '/puzzles' : '/play');
 
   return (
-    <div className="stack">
-      <header className="page-head" style={{ marginBottom: 0 }}>
-        <div>
-          <span className="eyebrow">
-            {match.controller === 'puzzle' ? 'Puzzle' : modeInfo?.name ?? 'Match'}
-            {match.controller === 'bot' ? ' · vs Bot' : match.controller === 'local' ? ' · Local duel' : ''}
-          </span>
-          <h1 style={{ fontSize: 'clamp(1.2rem, 2.2vw, 1.5rem)' }}>
-            {match.game.config.size}×{match.game.config.size} arena
-            <span className="muted" style={{ fontWeight: 500, fontSize: '0.8em' }}>
-              {' '}· {match.game.config.wallsPerPlayer} barriers · {formatTimeControl(match.initialMs, match.incrementMs)}
-            </span>
-          </h1>
+    <div className="game-screen">
+      <header className="game-topbar">
+        <button type="button" className="game-back" onClick={leaveMatch} aria-label="Leave match">
+          <BackIcon />
+        </button>
+        <div className="game-topbar-title">
+          <span className="game-title-main">{gameLabel}</span>
+          <span className="game-title-sub">{gameSub}</span>
         </div>
-        <div className="row small muted">
-          <span>{match.controller === 'bot' ? 'Offline bot' : match.controller === 'puzzle' ? 'Solo puzzle' : 'Same-device duel'}</span>
-        </div>
+        <span className="game-signal" aria-hidden="true">
+          <SignalIcon />
+        </span>
       </header>
 
       {settling ? (
-        <div className="notice-line success" role="status">
-          <span>Match complete. Opening results…</span>
+        <div className="game-notice success" role="status">
+          Match complete. Opening results…
         </div>
       ) : null}
 
-      <div className="match-stage">
-        <PlayerBar
-          player="red"
-          name={match.names.red}
-          subtitle={
-            match.controller === 'bot' && match.bot
-              ? `Bot · ${match.bot.rating}`
-              : match.controller === 'puzzle'
-                ? 'Puzzle'
-                : 'Local rival'
-          }
-          wallsLeft={match.game.wallsLeft.red}
-          totalWalls={match.game.config.wallsPerPlayer}
-          clockMs={match.clocks.red}
-          hasClock={hasClock}
-          active={match.game.turn === 'red' && !match.game.result}
-          thinking={match.controller === 'bot' && match.game.turn === 'red' && !match.game.result}
+      <PlayerBar
+        side="opponent"
+        player="red"
+        name={match.names.red}
+        subtitle={
+          match.controller === 'bot'
+            ? 'Offline bot'
+            : match.controller === 'puzzle'
+              ? 'Puzzle'
+              : 'Local rival'
+        }
+        rating={opponentRating}
+        wallsLeft={match.game.wallsLeft.red}
+        totalWalls={match.game.config.wallsPerPlayer}
+        clockMs={match.clocks.red}
+        hasClock={hasClock}
+        active={match.game.turn === 'red' && !match.game.result}
+        thinking={match.controller === 'bot' && match.game.turn === 'red' && !match.game.result}
+      />
+
+      <div className="game-board-slot">
+        <Board
+          boardRef={boardRef}
+          state={match.game}
+          interactive={canAct}
+          mode={mode}
+          wallOrientation={orientation}
+          onMove={(to) => act({ kind: 'move', to })}
+          onWall={(wallMove) => act(wallMove)}
+          lastMove={match.game.lastMove?.move ?? null}
+          dragging={wallDrag.dragging}
+          dragCandidate={wallDrag.candidate}
         />
-
-        <div className="board-slot">
-          <Board
-            boardRef={boardRef}
-            state={match.game}
-            interactive={canAct}
-            mode={mode}
-            wallOrientation={orientation}
-            onMove={(to) => act({ kind: 'move', to })}
-            onWall={(wallMove) => act(wallMove)}
-            lastMove={match.game.lastMove?.move ?? null}
-            dragging={wallDrag.dragging}
-            dragCandidate={wallDrag.candidate}
-          />
-        </div>
-
-        <PlayerBar
-          player="blue"
-          name={match.names.blue}
-          subtitle={match.controller === 'local' ? 'Local player' : 'You'}
-          wallsLeft={match.game.wallsLeft.blue}
-          totalWalls={match.game.config.wallsPerPlayer}
-          clockMs={match.clocks.blue}
-          hasClock={hasClock}
-          active={match.game.turn === 'blue' && !match.game.result}
-        />
-
-        <div className="match-status" role="status" aria-live="polite">
-          <span className="turn-dot" aria-hidden="true" />
-          <span>{status}</span>
-          <span className="pill">
-            {match.game.history.length} {plural(match.game.history.length, 'ply', 'plies')}
-          </span>
-          {match.controller === 'puzzle' ? (
-            <span className="pill pill-gold">
-              {blueMovesPlayed(match)}/{match.puzzle?.maxBlueMoves} casts
-            </span>
-          ) : null}
-        </div>
-
-        <div className="action-dock">
-          <div className="segmented" role="group" aria-label="Action mode">
-            <button type="button" aria-pressed={mode === 'move'} onClick={() => setMode('move')}>
-              Move
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === 'wall'}
-              onClick={() => setMode('wall')}
-              disabled={match.game.wallsLeft[match.game.turn] <= 0}
-            >
-              Barrier ({match.game.wallsLeft[match.game.turn]})
-            </button>
-          </div>
-          {canAct && match.game.wallsLeft[match.game.turn] > 0 ? (
-            <div className="wall-tray" role="group" aria-label="Barrier tray">
-              <button
-                type="button"
-                className={`wall-tray-stick ${orientation === 'H' ? 'h' : 'v'}`}
-                onPointerDown={(event) => {
-                  setMode('wall');
-                  wallDrag.start(event);
-                }}
-                onClick={wallDrag.onClick}
-                aria-label={`Drag a ${orientation === 'H' ? 'horizontal' : 'vertical'} barrier onto the board. Click to rotate.`}
-                title={`Drag barrier · ${orientation === 'H' ? 'horizontal' : 'vertical'} (click to rotate)`}
-              />
-              <div className="segmented" role="group" aria-label="Barrier orientation">
-                <button
-                  type="button"
-                  aria-pressed={orientation === 'H'}
-                  onClick={() => {
-                    setOrientation('H');
-                    setMode('wall');
-                  }}
-                >
-                  H
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={orientation === 'V'}
-                  onClick={() => {
-                    setOrientation('V');
-                    setMode('wall');
-                  }}
-                >
-                  V
-                </button>
-              </div>
-            </div>
-          ) : null}
-          <div className="dock-actions">
-            <button
-              type="button"
-              className="btn btn-sm btn-ghost"
-              onClick={handleUndo}
-              disabled={!match.allowUndo || match.game.history.length === 0 || Boolean(match.game.result)}
-            >
-              Undo
-            </button>
-            {match.controller !== 'puzzle' ? (
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setModal('draw')} disabled={Boolean(match.game.result)}>
-                Draw
-              </button>
-            ) : null}
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => setModal('resign')} disabled={Boolean(match.game.result)}>
-              Resign
-            </button>
-          </div>
-        </div>
       </div>
 
-      <details className="quiet-details">
-        <summary>Move log · {match.game.history.length}</summary>
-        {history.length === 0 ? (
-          <p className="empty-note">No moves yet.</p>
-        ) : (
-          <ol className="log-list" ref={logRef}>
-            {history.map((record) => (
-              <li key={record.ply} className={`log-entry ${record.by}-log`}>
-                <span className="log-ply">{record.ply}.</span>
-                <span className="log-actor">{record.by === 'blue' ? 'Blue' : 'Red'}</span>
-                <span>{describeMove(record.move, match.game.config.size)}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </details>
+      <PlayerBar
+        side="self"
+        player="blue"
+        name={match.names.blue}
+        wallsLeft={match.game.wallsLeft.blue}
+        totalWalls={match.game.config.wallsPerPlayer}
+        clockMs={match.clocks.blue}
+        hasClock={hasClock}
+        active={match.game.turn === 'blue' && !match.game.result}
+      />
 
-      <details className="quiet-details">
-        <summary>Match details</summary>
-        <div className="quiet-content small muted">
-          <div className="row-between">
-            <span>Clock</span>
-            <span>{timeControl ? timeControl.label : 'No clock'}</span>
-          </div>
-          <div className="row-between">
-            <span>Duration</span>
-            <span>{formatDuration(Math.max(0, Date.now() - match.createdAt))}</span>
-          </div>
-          <div className="row-between">
-            <span>Barriers</span>
-            <span>Blue {match.game.wallsLeft.blue} · Red {match.game.wallsLeft.red}</span>
-          </div>
-          <div className="divider" />
-          <p>Move one square or drag a barrier onto a highlighted slot. A barrier cannot seal every route. Reach the far row to win.</p>
-          <p>Shortcuts: M move · W barrier · H/V orientation · R rotate · U undo.</p>
-          <p>This match is stored on this device only. Refreshing is safe.</p>
-          <button type="button" className="btn btn-sm btn-ghost" onClick={() => setModal('restart')}>
-            Restart match
+      <div className="game-status" role="status" aria-live="polite">
+        <span className={`game-status-dot${match.game.turn === 'red' ? ' red' : ''}`} aria-hidden="true" />
+        <span>{status}</span>
+        <span className="game-status-ply">
+          {match.game.history.length} {plural(match.game.history.length, 'ply', 'plies')}
+        </span>
+        {match.controller === 'puzzle' ? (
+          <span className="game-status-ply">
+            {blueMovesPlayed(match)}/{match.puzzle?.maxBlueMoves} casts
+          </span>
+        ) : null}
+      </div>
+
+      <div className="wall-picker" role="group" aria-label="Wall orientation">
+        <button
+          type="button"
+          className={`wall-choice${orientation === 'H' ? ' selected' : ''}`}
+          aria-pressed={orientation === 'H'}
+          aria-label="Horizontal wall. Tap to select or drag onto the board."
+          disabled={!canPlaceWall}
+          onPointerDown={(event) => {
+            if (!canPlaceWall) return;
+            setOrientation('H');
+            setMode('wall');
+            wallDrag.start(event, 'H');
+          }}
+          onClick={() => {
+            setOrientation('H');
+            setMode('wall');
+          }}
+        >
+          <span className={`wall-choice-piece h${orientation === 'H' ? ' active' : ''}`} aria-hidden="true" />
+          <span className="wall-choice-label">Horizontal</span>
+        </button>
+        <button
+          type="button"
+          className={`wall-choice${orientation === 'V' ? ' selected' : ''}`}
+          aria-pressed={orientation === 'V'}
+          aria-label="Vertical wall. Tap to select or drag onto the board."
+          disabled={!canPlaceWall}
+          onPointerDown={(event) => {
+            if (!canPlaceWall) return;
+            setOrientation('V');
+            setMode('wall');
+            wallDrag.start(event, 'V');
+          }}
+          onClick={() => {
+            setOrientation('V');
+            setMode('wall');
+          }}
+        >
+          <span className={`wall-choice-piece v${orientation === 'V' ? ' active' : ''}`} aria-hidden="true" />
+          <span className="wall-choice-label">Vertical</span>
+        </button>
+      </div>
+
+      <nav className="game-actions" aria-label="Match actions">
+        <button
+          type="button"
+          className="game-action"
+          onClick={handleUndo}
+          disabled={!match.allowUndo || match.game.history.length === 0 || Boolean(match.game.result)}
+        >
+          <UndoIcon />
+          <span>Undo</span>
+        </button>
+        {match.controller !== 'puzzle' ? (
+          <button type="button" className="game-action" onClick={() => setModal('draw')} disabled={Boolean(match.game.result)}>
+            <DrawIcon />
+            <span>Draw</span>
           </button>
-        </div>
-      </details>
+        ) : null}
+        <button type="button" className="game-action" onClick={() => setOptionsOpen(true)}>
+          <OptionsIcon />
+          <span>Options</span>
+        </button>
+        <button
+          type="button"
+          className="game-action danger"
+          onClick={() => setModal('resign')}
+          disabled={Boolean(match.game.result)}
+        >
+          <FlagIcon />
+          <span>Resign</span>
+        </button>
+      </nav>
+
+      {optionsOpen ? (
+        <GameOptions title="Options" onClose={() => setOptionsOpen(false)}>
+          <section className="game-options-section">
+            <h3>How to play · Blockade</h3>
+            <p className="game-options-lead">{BLOCKADE_RULES_SUMMARY}</p>
+            {BLOCKADE_RULES.map((rule) => (
+              <div key={rule.title} className="rule-row">
+                <strong>{rule.title}</strong>
+                <p>{rule.body}</p>
+              </div>
+            ))}
+            <p className="game-options-note">
+              This build still uses the previous movement engine; the Blockade movement update arrives next.
+            </p>
+          </section>
+
+          <section className="game-options-section">
+            <h3>Move log · {match.game.history.length}</h3>
+            {history.length === 0 ? (
+              <p className="empty-note">No moves yet.</p>
+            ) : (
+              <ol className="log-list" ref={logRef}>
+                {history.map((record) => (
+                  <li key={record.ply} className={`log-entry ${record.by}-log`}>
+                    <span className="log-ply">{record.ply}.</span>
+                    <span className="log-actor">{record.by === 'blue' ? 'Blue' : 'Red'}</span>
+                    <span>{describeMove(record.move, match.game.config.size)}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <section className="game-options-section">
+            <h3>Match details</h3>
+            <div className="game-options-rows">
+              <div className="row-between">
+                <span>Clock</span>
+                <span>{timeControl ? timeControl.label : 'No clock'}</span>
+              </div>
+              <div className="row-between">
+                <span>Format</span>
+                <span>{formatTimeControl(match.initialMs, match.incrementMs)}</span>
+              </div>
+              <div className="row-between">
+                <span>Duration</span>
+                <span>{formatDuration(Math.max(0, Date.now() - match.createdAt))}</span>
+              </div>
+              <div className="row-between">
+                <span>Walls</span>
+                <span>Blue {match.game.wallsLeft.blue} · Red {match.game.wallsLeft.red}</span>
+              </div>
+            </div>
+            <div className="game-options-actions">
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => {
+                  setOptionsOpen(false);
+                  setModal('restart');
+                }}
+              >
+                Restart match
+              </button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={leaveMatch}>
+                Leave match
+              </button>
+            </div>
+            <p className="game-options-note">Stored on this device only. Refreshing is safe.</p>
+          </section>
+        </GameOptions>
+      ) : null}
 
       {modal === 'resign' ? (
         <Modal

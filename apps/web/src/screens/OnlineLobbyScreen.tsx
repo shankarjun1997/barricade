@@ -245,7 +245,7 @@ export function OnlineLobbyScreen() {
               <select id="online-mode" value={modeId} onChange={(event) => chooseMode(event.target.value as ModeId)}>
                 {ONLINE_MODES.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.name} · {item.arena.size}×{item.arena.size} · {item.arena.wallsPerPlayer} barriers
+                    {item.name} · {item.arena.size}×{item.arena.size} · {item.arena.wallsPerPlayer} walls
                   </option>
                 ))}
               </select>
@@ -326,7 +326,7 @@ export function OnlineLobbyScreen() {
                   </div>
                   <p className="small muted">
                     {modeById(room.modeId)?.name ?? room.modeId} · {room.config.size}×{room.config.size} ·{' '}
-                    {room.config.wallsPerPlayer} barriers · {room.visibility}
+                    {room.config.wallsPerPlayer} walls · {room.visibility}
                   </p>
                   <div className="row small">
                     <span className="pill pill-blue">Blue · {room.host.name}</span>

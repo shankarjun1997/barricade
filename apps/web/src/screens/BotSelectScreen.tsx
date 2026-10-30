@@ -54,7 +54,7 @@ export function BotSelectScreen() {
             <p className="small muted">{bot.blurb}</p>
             <div className="mode-meta">
               <span className="pill">9×9 Dash</span>
-              <span className="pill">10 barriers</span>
+              <span className="pill">10 walls</span>
               <span className="pill">3 min +1s</span>
             </div>
             <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => challenge(bot.id)}>

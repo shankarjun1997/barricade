@@ -131,8 +131,8 @@ try {
   await page.mouse.wheel(0, 600);
   await page.waitForTimeout(150);
   assert.equal(await page.evaluate(() => window.scrollY), 0, 'match screen must not scroll while playing');
-  await page.keyboard.press('h');
-  const stick = await page.locator('.wall-tray-stick').boundingBox();
+  await page.locator('.wall-choice').first().click();
+  const stick = await page.locator('.wall-choice').first().boundingBox();
   const dragSlots = page.locator('.wall-slot');
   assert.ok((await dragSlots.count()) > 10, 'drag targets should be available');
   const dragTarget = dragSlots.nth(20);
@@ -151,8 +151,8 @@ try {
   await page.waitForTimeout(200);
   assert.equal(await page.locator('.wall').count(), 0, 'undo should remove the dragged barrier');
 
-  await page.keyboard.press('v');
-  const vStick = await page.locator('.wall-tray-stick').boundingBox();
+  await page.locator('.wall-choice').nth(1).click();
+  const vStick = await page.locator('.wall-choice').nth(1).boundingBox();
   const vSlots = page.locator('.wall-slot');
   const vBox = await vSlots.nth(20).boundingBox();
   assert.ok(vStick && vBox, 'vertical stick and target need boxes');
@@ -170,6 +170,11 @@ try {
   await page.getByRole('button', { name: 'Undo' }).first().click();
   await page.waitForTimeout(200);
   assert.equal(await page.locator('.wall').count(), 0, 'undo should remove the vertical barrier');
+
+  await page.getByRole('button', { name: 'Options' }).click();
+  await page.getByRole('dialog').getByText('How to play · Blockade').waitFor();
+  await page.getByText(/Move a pawn two spaces orthogonally/).waitFor();
+  await page.getByRole('button', { name: 'Close options' }).click();
 
   await page.getByRole('button', { name: 'Resign' }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Resign' }).click();
@@ -193,7 +198,7 @@ try {
   await page.getByRole('button', { name: 'Move to E2' }).click();
   await page.waitForFunction(
     () => {
-      const pill = [...document.querySelectorAll('.pill')].find((node) => /plies/.test(node.textContent || ''));
+      const pill = [...document.querySelectorAll('.game-status-ply')].find((node) => /plies/.test(node.textContent || ''));
       return pill && /[2-9] plies/.test(pill.textContent || '');
     },
     undefined,

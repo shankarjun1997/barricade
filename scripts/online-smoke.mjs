@@ -223,9 +223,10 @@ try {
   console.error('\nOnline smoke failed:', error instanceof Error ? error.message : error);
   process.exitCode = 1;
 } finally {
-  if (preview) preview.kill('SIGTERM');
-  if (server) server.kill('SIGTERM');
+  if (preview) preview.kill('SIGKILL');
+  if (server) server.kill('SIGKILL');
   if (reusedServer) console.log('Left the existing game server running.');
   if (reusedPreview) console.log('Left the existing preview server running.');
-  rmSync(dataDir, { recursive: true, force: true });
+  rmSync(dataDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  process.exit(process.exitCode ?? 0);
 }

@@ -31,7 +31,7 @@ export function HomeScreen() {
           <span className="eyebrow">Competitive grid duel</span>
           <h1>Race. Wall. Outthink.</h1>
           <p className="page-sub">
-            Reach the far side. Place barriers. Bend your rival's route before they bend yours.
+            Race to the rival's home space. Place walls. Cut their path before they cut yours.
           </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" to="/online">
@@ -142,7 +142,7 @@ export function HomeScreen() {
                 <small>{mode.tagline}</small>
               </span>
               <span className="small muted">
-                {mode.arena.size}×{mode.arena.size} · {mode.arena.wallsPerPlayer} barriers
+                {mode.arena.size}×{mode.arena.size} · {mode.arena.wallsPerPlayer} walls
               </span>
             </Link>
           ))}
