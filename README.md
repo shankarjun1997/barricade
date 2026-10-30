@@ -1,5 +1,7 @@
 # Barricade
 
+<p align="center"><img src="apps/web/public/logo-lockup.svg" alt="Barricade — competitive grid duel" width="420"></p>
+
 A competitive grid-duel game — race your piece to the rival's home space while placing walls to bend
 their path.
 
