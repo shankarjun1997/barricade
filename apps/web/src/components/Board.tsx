@@ -88,10 +88,6 @@ export function Board({
 
   const lastPawnTarget =
     lastMove?.kind === 'move' ? pointKey(lastMove.to.r, lastMove.to.c) : null;
-  const lastWallKey =
-    lastMove?.kind === 'wall'
-      ? `${lastMove.orientation}${lastMove.r},${lastMove.c}`
-      : null;
 
   const cells = [];
   for (let r = 0; r < size; r++) {
@@ -138,11 +134,10 @@ export function Board({
 
   const wallEls = state.walls.map((w, index) => {
     const key = `${w.orientation}${w.r},${w.c}`;
-    const isLast = key === lastWallKey;
     return (
       <div
         key={`${key}-${index}`}
-        className={`wall wall-${w.orientation.toLowerCase()}${isLast ? ' last' : ''}`}
+        className={`wall wall-${w.orientation.toLowerCase()}`}
         style={wallStyle(w.orientation, w.r, w.c, cell, WALL_THICKNESS)}
         aria-hidden="true"
       />

@@ -1752,9 +1752,6 @@ tbody tr:hover {
   z-index: 1;
 }
 
-.wall.last {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55), 0 0 18px rgba(245, 196, 81, 0.7);
-}
 
 .wall-preview {
   position: absolute;
