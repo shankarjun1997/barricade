@@ -124,6 +124,9 @@ Standard Blockade rules (the target ruleset for this build):
   server-checked.
 - **Online pre-move:** while the opponent is thinking, tap a dot or wall slot to queue your next move;
   it plays automatically when your turn starts if it is still legal.
+- **Wall impact:** while choosing a wall, slots are tinted by severity — grey minor, blue light, gold
+  strong, red critical — based on how many likely opponent moves and shortest-path steps the wall cuts.
+  Highlights clear immediately after placement.
 
 ## Modes
 

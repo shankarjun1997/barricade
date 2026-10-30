@@ -170,7 +170,7 @@ export function MatchScreen() {
       let next = result.match;
       if (puzzleOutOfBudget(next)) next = { ...next, failed: true };
       update(next);
-      if (move.kind === 'wall' && next.game.wallsLeft[next.game.turn] <= 0) setMode('move');
+      setMode('move');
       sfx(move.kind === 'wall' ? 'wall' : 'move');
     },
     [sfx, toast, update],
@@ -433,10 +433,10 @@ export function MatchScreen() {
             setMode('wall');
             wallDrag.start(event, 'H');
           }}
-          onClick={() => {
+          onClick={() => wallDrag.onClick(() => {
             setOrientation('H');
             setMode('wall');
-          }}
+          })}
         >
           <span className={`wall-choice-piece h${orientation === 'H' ? ' active' : ''}`} aria-hidden="true" />
           <span className="wall-choice-label">Horizontal</span>
@@ -453,15 +453,24 @@ export function MatchScreen() {
             setMode('wall');
             wallDrag.start(event, 'V');
           }}
-          onClick={() => {
+          onClick={() => wallDrag.onClick(() => {
             setOrientation('V');
             setMode('wall');
-          }}
+          })}
         >
           <span className={`wall-choice-piece v${orientation === 'V' ? ' active' : ''}`} aria-hidden="true" />
           <span className="wall-choice-label">Vertical</span>
         </button>
       </div>
+
+      {mode === 'wall' || wallDrag.dragging ? (
+        <div className="wall-legend" aria-hidden="true">
+          <span><i className="minor" /> Minor</span>
+          <span><i className="low" /> Light</span>
+          <span><i className="strong" /> Strong</span>
+          <span><i className="critical" /> Critical</span>
+        </div>
+      ) : null}
 
       <nav className="game-actions" aria-label="Match actions">
         <button

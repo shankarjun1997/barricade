@@ -176,12 +176,12 @@ export function useWallDrag(options: UseWallDragOptions) {
         }
       : null;
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback((onTap?: () => void) => {
     if (suppressClick.current) {
       suppressClick.current = false;
       return;
     }
-    optionsRef.current.onTap?.();
+    (onTap ?? optionsRef.current.onTap)?.();
   }, []);
 
   return {

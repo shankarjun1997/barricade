@@ -134,9 +134,13 @@ export function OnlineMatchScreen() {
   const handleBoardMove = (move: Move) => {
     if (canAct) {
       sendMove(move);
+      setMode('move');
       return;
     }
-    if (canPremove) setPreMove(move);
+    if (canPremove) {
+      setPreMove(move);
+      setMode('move');
+    }
   };
 
   const dragLegalWalls = useMemo<WallMove[]>(() => {
@@ -477,10 +481,10 @@ export function OnlineMatchScreen() {
                 setMode('wall');
                 wallDrag.start(event, 'H');
               }}
-              onClick={() => {
+              onClick={() => wallDrag.onClick(() => {
                 setOrientation('H');
                 setMode('wall');
-              }}
+              })}
             >
               <span className={`wall-choice-piece h${orientation === 'H' ? ' active' : ''}`} aria-hidden="true" />
               <span className="wall-choice-label">Horizontal</span>
@@ -497,15 +501,24 @@ export function OnlineMatchScreen() {
                 setMode('wall');
                 wallDrag.start(event, 'V');
               }}
-              onClick={() => {
+              onClick={() => wallDrag.onClick(() => {
                 setOrientation('V');
                 setMode('wall');
-              }}
+              })}
             >
               <span className={`wall-choice-piece v${orientation === 'V' ? ' active' : ''}`} aria-hidden="true" />
               <span className="wall-choice-label">Vertical</span>
             </button>
           </div>
+
+          {mode === 'wall' || wallDrag.dragging ? (
+            <div className="wall-legend" aria-hidden="true">
+              <span><i className="minor" /> Minor</span>
+              <span><i className="low" /> Light</span>
+              <span><i className="strong" /> Strong</span>
+              <span><i className="critical" /> Critical</span>
+            </div>
+          ) : null}
 
           <nav className="game-actions" aria-label="Match actions">
             <button type="button" className="game-action" onClick={openChat}>

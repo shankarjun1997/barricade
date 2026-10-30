@@ -3686,3 +3686,90 @@ body.match-fixed .main {
 .chat-option[data-tone='good'] {
   border-left: 3px solid var(--game-green);
 }
+
+/* ── Wall impact severity ─────────────────────────────────────── */
+
+.game-screen .wall-slot[data-severity='1'] {
+  border-color: var(--game-blue);
+  background: rgba(74, 168, 255, 0.22);
+}
+
+.game-screen .wall-slot[data-severity='2'] {
+  border-color: var(--gold);
+  background: rgba(245, 196, 81, 0.24);
+}
+
+.game-screen .wall-slot[data-severity='3'] {
+  border-color: var(--game-red);
+  background: rgba(255, 93, 108, 0.26);
+  box-shadow: 0 0 12px rgba(255, 93, 108, 0.35);
+}
+
+.game-screen .wall-preview[data-severity='1'] {
+  background: linear-gradient(180deg, #9ecbff, #4aa8ff 55%, #2f73b8);
+  box-shadow: 0 2px 7px rgba(40, 70, 130, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.game-screen .wall-preview[data-severity='2'] {
+  background: linear-gradient(180deg, #ffe6a8, var(--gold) 55%, #b98524);
+  box-shadow: 0 2px 7px rgba(120, 90, 20, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.game-screen .wall-preview[data-severity='3'] {
+  background: linear-gradient(180deg, #ffb0b8, var(--red) 55%, #a8323e);
+  box-shadow: 0 0 16px rgba(255, 93, 108, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.game-screen .wall-preview.invalid {
+  background: rgba(255, 93, 108, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 93, 108, 0.85), 0 0 16px rgba(255, 93, 108, 0.45);
+}
+
+.wall-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  color: var(--game-muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wall-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wall-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+}
+
+.wall-legend .minor {
+  background: var(--game-dim);
+}
+
+.wall-legend .low {
+  background: var(--game-blue);
+}
+
+.wall-legend .strong {
+  background: var(--gold);
+}
+
+.wall-legend .critical {
+  background: var(--game-red);
+}
+
+@media (max-width: 480px) {
+  .wall-legend {
+    gap: 8px;
+    font-size: 0.6rem;
+  }
+}

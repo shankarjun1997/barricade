@@ -9,6 +9,7 @@ import {
   type WallMove,
 } from '@barricade/engine';
 import { columnName } from '../lib/format.js';
+import { wallImpact, wallImpactLabel, type WallImpact } from '../lib/wallSeverity.js';
 
 interface BoardProps {
   readonly state: GameState;
@@ -86,6 +87,31 @@ export function Board({
     return { legalPoints: points, legalWalls: walls };
   }, [state, interactive, mode, wallOrientation, dragging, player]);
 
+  const wallImpacts = useMemo(() => {
+    const map = new Map<string, WallImpact>();
+    if (legalWalls.length > 0) {
+      const owner = player ?? state.turn;
+      for (const move of legalWalls) {
+        map.set(
+          `${move.orientation}${move.r},${move.c}`,
+          wallImpact(state, move.orientation, move.r, move.c, owner),
+        );
+      }
+    }
+    return map;
+  }, [state, legalWalls, player]);
+
+  const dragImpact = useMemo(() => {
+    if (!dragCandidate || !dragCandidate.valid) return null;
+    return wallImpact(
+      state,
+      dragCandidate.orientation,
+      dragCandidate.r,
+      dragCandidate.c,
+      player ?? state.turn,
+    );
+  }, [state, dragCandidate, player]);
+
   const lastPawnTarget =
     lastMove?.kind === 'move' ? pointKey(lastMove.to.r, lastMove.to.c) : null;
 
@@ -146,12 +172,15 @@ export function Board({
 
   const slotEls = legalWalls.map((w) => {
     const key = `${w.orientation}${w.r},${w.c}`;
-    const label = `Place ${w.orientation === 'H' ? 'horizontal' : 'vertical'} wall at ${columnName(w.c)}${size - w.r}`;
+    const impact = wallImpacts.get(key);
+    const base = `Place ${w.orientation === 'H' ? 'horizontal' : 'vertical'} wall at ${columnName(w.c)}${size - w.r}`;
+    const label = impact ? `${base} — ${wallImpactLabel(impact)}` : base;
     return (
       <button
         key={`slot-${key}`}
         type="button"
         className={`wall-slot wall-slot-${w.orientation.toLowerCase()}${premove ? ' premove' : ''}`}
+        data-severity={impact?.severity ?? 0}
         style={wallStyle(w.orientation, w.r, w.c, cell, SLOT_THICKNESS)}
         aria-label={label}
         title={label}
@@ -165,6 +194,7 @@ export function Board({
       className={`wall-preview wall-preview-${dragCandidate.orientation.toLowerCase()}${
         dragCandidate.valid ? '' : ' invalid'
       }`}
+      data-severity={dragImpact?.severity ?? 0}
       style={wallStyle(dragCandidate.orientation, dragCandidate.r, dragCandidate.c, cell, WALL_THICKNESS)}
       aria-hidden="true"
     />

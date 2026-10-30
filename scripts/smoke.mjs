@@ -110,6 +110,12 @@ try {
   await page.keyboard.press('w');
   const slots = page.locator('.wall-slot');
   assert.ok((await slots.count()) > 10, 'wall slots should appear in barrier mode');
+  await page.screenshot({ path: path.join(artifacts, 'match-walls-desktop.png') });
+  const severities = await slots.evaluateAll((els) => els.map((el) => el.getAttribute('data-severity')));
+  assert.ok(
+    severities.every((value) => value !== null && ['0', '1', '2', '3'].includes(value)),
+    'wall slots should carry impact severity',
+  );
   const target = slots.nth(Math.min(20, (await slots.count()) - 1));
   await target.evaluate((element) => element.scrollIntoView({ block: 'center' }));
   const box = await target.boundingBox();
@@ -117,6 +123,7 @@ try {
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await page.waitForTimeout(250);
   assert.equal(await page.locator('.wall').count(), 1, 'barrier should be placed');
+  assert.equal(await page.locator('.wall-slot').count(), 0, 'wall slots should clear immediately after placement');
 
   await page.getByRole('button', { name: 'Undo' }).first().click();
   await page.waitForTimeout(200);
@@ -143,9 +150,14 @@ try {
   await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + dragBox.height / 2, { steps: 12 });
   await page.waitForTimeout(120);
   assert.equal(await page.locator('.wall-preview').count(), 1, 'drag should show a placement preview');
+  assert.ok(
+    await page.locator('.wall-preview').getAttribute('data-severity'),
+    'drag preview should carry impact severity',
+  );
   await page.mouse.up();
   await page.waitForTimeout(250);
   assert.equal(await page.locator('.wall').count(), 1, 'dragged barrier should be placed');
+  assert.equal(await page.locator('.wall-slot').count(), 0, 'wall slots should clear after a drag placement');
   await page.getByText(/Rival to move/).waitFor();
   await page.getByRole('button', { name: 'Undo' }).first().click();
   await page.waitForTimeout(200);
@@ -162,6 +174,7 @@ try {
   await page.mouse.up();
   await page.waitForTimeout(250);
   assert.equal(await page.locator('.wall').count(), 1, 'vertical barrier should be placed');
+  assert.equal(await page.locator('.wall-slot').count(), 0, 'wall slots should clear after a vertical placement');
   const vertical = await page.locator('.wall').first().evaluate((el) => {
     const rect = el.getBoundingClientRect();
     return rect.height > rect.width;
