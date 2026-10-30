@@ -101,7 +101,8 @@ Standard Blockade rules (the target ruleset for this build):
   diagonally, provided the path is clear. Pawns cannot share a space; if blocked, a pawn may move one
   space, and adjacent pawns can be jumped.
 - Walls: end your turn by placing a wall in an open board groove if one is available. Blue walls lie
-  horizontally and green walls lie vertically; each wall blocks two spaces.
+  horizontally and green walls lie vertically; each wall blocks two spaces. Walls may not overlap
+  (including collinear walls one groove apart), cross, or seal every route.
 - Open paths: home spaces can never be completely enclosed, so each player always keeps at least one
   open path. Once your wall supply is exhausted, keep taking turns by moving pawns only.
 - Reaching the opponent’s home space wins. Resign, draw agreement and clock timeout are explicit,
@@ -118,6 +119,11 @@ Standard Blockade rules (the target ruleset for this build):
   movement, `U` to undo, and `R` to rotate the selected wall.
 - The match screen is locked to the viewport and never scrolls up or down while you play.
 - **Options** in the match opens the full Blockade rules, move log and match details.
+- **Online chat:** pre-written quick messages in Good / Playful / Spicy tones across greetings, respect,
+  hype, strategy, jokes, trash talk, flirty and rematch genres. No free text, so every line is
+  server-checked.
+- **Online pre-move:** while the opponent is thinking, tap a dot or wall slot to queue your next move;
+  it plays automatically when your turn starts if it is still legal.
 
 ## Modes
 
@@ -169,8 +175,9 @@ Current suites:
 
 Browser smoke coverage: local match → click wall → undo → drag wall (H/V, preview) → undo →
 resign → result → rematch → refresh restore → bot match → puzzle solve → settings → mobile; and online
-rooms → invite link → server moves → resignation → Elo → colour-swapped rematch → disconnect/reconnect →
-global matchmaking → mobile. Both run with zero console errors and no horizontal overflow at 390 px.
+rooms → invite link → quick chat → pre-move → server moves → resignation → Elo → colour-swapped rematch →
+disconnect/reconnect → global matchmaking → mobile. Both run with zero console errors and no horizontal
+overflow at 390 px.
 
 **Production online verification (2026-10-27):** two isolated Chrome contexts completed the full flow
 against `wss://barricade-w45u.onrender.com/ws` from https://barricade-ruby.vercel.app — room creation,

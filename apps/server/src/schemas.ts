@@ -81,6 +81,11 @@ export const ClientMessageSchema = z.discriminatedUnion('type', [
     matchId: z.string().min(4).max(80),
     accept: z.boolean(),
   }),
+  z.object({
+    type: z.literal('chat'),
+    matchId: z.string().min(4).max(80),
+    optionId: z.string().min(4).max(64),
+  }),
   z.object({ type: z.literal('match_leave'), matchId: z.string().min(4).max(80) }),
   z.object({ type: z.literal('ping'), t: z.number().finite() }),
 ]);

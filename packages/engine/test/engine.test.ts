@@ -139,7 +139,7 @@ describe('pawn movement', () => {
     const base = withPawns(blank(), { r: 2, c: 2 }, { r: 1, c: 2 });
     const state: GameState = {
       ...base,
-      walls: [{ orientation: 'H', r: 0, c: 2, owner: 'red' }, { orientation: 'H', r: 0, c: 1, owner: 'red' }],
+      walls: [{ orientation: 'H', r: 0, c: 1, owner: 'red' }],
     };
     const moves = legalPawnMoves(state);
     expect(moves).not.toContainEqual({ r: 0, c: 2 });
@@ -190,6 +190,22 @@ describe('barrier placement', () => {
     const result = applyMove(state, { kind: 'wall', orientation: 'H', r: 2, c: 2 });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('WALL_OVERLAP');
+  });
+
+  it('rejects collinear barriers that overlap by one segment', () => {
+    const state = playAll(blank(9), [{ kind: 'wall', orientation: 'H', r: 2, c: 2 }]);
+    const adjacent = applyMove(state, { kind: 'wall', orientation: 'H', r: 2, c: 3 });
+    expect(adjacent.ok).toBe(false);
+    if (!adjacent.ok) expect(adjacent.error.code).toBe('WALL_OVERLAP');
+    const spaced = applyMove(state, { kind: 'wall', orientation: 'H', r: 2, c: 4 });
+    expect(spaced.ok).toBe(true);
+  });
+
+  it('rejects vertical barriers that overlap by one segment', () => {
+    const state = playAll(blank(), [{ kind: 'wall', orientation: 'V', r: 2, c: 2 }]);
+    const adjacent = applyMove(state, { kind: 'wall', orientation: 'V', r: 3, c: 2 });
+    expect(adjacent.ok).toBe(false);
+    if (!adjacent.ok) expect(adjacent.error.code).toBe('WALL_OVERLAP');
   });
 
   it('rejects crossing barriers', () => {
@@ -422,7 +438,7 @@ describe('custom positions and puzzle helpers', () => {
       {
         walls: [
           { orientation: 'H', r: 3, c: 2, owner: 'red' },
-          { orientation: 'H', r: 3, c: 3, owner: 'red' },
+          { orientation: 'H', r: 3, c: 4, owner: 'red' },
         ],
       },
     );

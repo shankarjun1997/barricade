@@ -160,11 +160,23 @@ try {
     await a.locator('.board').waitFor();
     assert.ok(await a.locator('.page-head .pill').filter({ hasText: 'Blue' }).isVisible());
 
-    console.log('== authoritative moves ==');
+    console.log('== quick chat ==');
+    await a.getByRole('button', { name: /^Chat/ }).click();
+    await a.screenshot({ path: path.join(artifacts, 'online-chat-desktop.png') });
+    await a.getByRole('button', { name: /Good luck, have fun!/ }).click();
+    await b.getByRole('button', { name: /^Chat/ }).click();
+    await b.locator('.chat-bubble', { hasText: 'Good luck, have fun!' }).waitFor({ timeout: 8_000 });
+    await b.screenshot({ path: path.join(artifacts, 'online-chat-received.png') });
+    await b.getByRole('button', { name: 'Close chat' }).click();
+    await a.getByRole('button', { name: 'Close chat' }).click();
+
+    console.log('== authoritative moves + pre-move ==');
     await a.getByRole('button', { name: 'Move to E2' }).click();
+    await a.getByRole('button', { name: 'Pre-move to E3' }).click();
+    await a.getByText(/Pre-move queued/).waitFor();
     await b.getByRole('button', { name: 'Move to E8' }).waitFor({ timeout: 8_000 });
     await b.getByRole('button', { name: 'Move to E8' }).click();
-    await a.getByText('2 plies').waitFor({ timeout: 8_000 });
+    await a.getByText('3 plies').waitFor({ timeout: 8_000 });
 
     console.log('== resignation, Elo, rematch ==');
     await resign(b);

@@ -6,6 +6,9 @@ import type {
   Move,
   Player,
 } from '@barricade/engine';
+import type { ChatGenre, ChatTone } from './chat.js';
+
+export * from './chat.js';
 
 export const PROTOCOL_VERSION = 1;
 
@@ -18,6 +21,17 @@ export interface PublicPlayer {
   readonly wins: number;
   readonly losses: number;
   readonly draws: number;
+}
+
+export interface ChatMessage {
+  readonly id: string;
+  readonly matchId: string;
+  readonly from: PublicPlayer;
+  readonly optionId: string;
+  readonly text: string;
+  readonly tone: ChatTone;
+  readonly genre: ChatGenre;
+  readonly sentAt: number;
 }
 
 export interface PresenceInfo {
@@ -120,6 +134,7 @@ export type ClientMessage =
   | { type: 'draw_respond'; matchId: string; accept: boolean }
   | { type: 'rematch_request'; matchId: string }
   | { type: 'rematch_respond'; matchId: string; accept: boolean }
+  | { type: 'chat'; matchId: string; optionId: string }
   | { type: 'match_leave'; matchId: string }
   | { type: 'ping'; t: number };
 
@@ -150,6 +165,7 @@ export type ServerMessage =
   | { type: 'match_end'; match: MatchSnapshot }
   | { type: 'draw_offer'; matchId: string; from: PublicPlayer }
   | { type: 'rematch_state'; matchId: string; requestedBy: readonly PublicPlayer[] }
+  | { type: 'chat'; chat: ChatMessage }
   | { type: 'notice'; kind: 'info' | 'success' | 'warning' | 'error'; message: string }
   | { type: 'pong'; t: number; serverNow: number }
   | { type: 'session_replaced' }

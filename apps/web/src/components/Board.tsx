@@ -4,6 +4,7 @@ import {
   legalWallMoves,
   type GameState,
   type Move,
+  type Player,
   type Point,
   type WallMove,
 } from '@barricade/engine';
@@ -23,6 +24,9 @@ interface BoardProps {
   readonly dragCandidate?:
     | { readonly r: number; readonly c: number; readonly orientation: 'H' | 'V'; readonly valid: boolean }
     | null;
+  readonly player?: Player;
+  readonly premove?: boolean;
+  readonly premoveTarget?: Point | null;
 }
 
 const WALL_THICKNESS = 2.4;
@@ -60,6 +64,9 @@ export function Board({
   boardRef,
   dragging = false,
   dragCandidate = null,
+  player,
+  premove = false,
+  premoveTarget = null,
 }: BoardProps) {
   const size = state.config.size;
   const cell = 100 / size;
@@ -68,15 +75,16 @@ export function Board({
     const points = new Set<string>();
     const walls: WallMove[] = [];
     if (interactive && !state.result) {
-      for (const point of legalPawnMoves(state)) points.add(pointKey(point.r, point.c));
+      const perspective = player ?? state.turn;
+      for (const point of legalPawnMoves(state, perspective)) points.add(pointKey(point.r, point.c));
       if (mode === 'wall' || dragging) {
-        for (const move of legalWallMoves(state)) {
+        for (const move of legalWallMoves(state, perspective)) {
           if (move.orientation === wallOrientation) walls.push(move);
         }
       }
     }
     return { legalPoints: points, legalWalls: walls };
-  }, [state, interactive, mode, wallOrientation, dragging]);
+  }, [state, interactive, mode, wallOrientation, dragging, player]);
 
   const lastPawnTarget =
     lastMove?.kind === 'move' ? pointKey(lastMove.to.r, lastMove.to.c) : null;
@@ -96,6 +104,7 @@ export function Board({
       if (r === 0) classes.push('goal-blue');
       if (r === size - 1) classes.push('goal-red');
       if (lastPawnTarget === key) classes.push('last');
+      if (premoveTarget && premoveTarget.r === r && premoveTarget.c === c) classes.push('premove-target');
 
       const point: Point = { r, c };
       const label = `Move to ${columnName(c)}${size - r}`;
@@ -115,8 +124,8 @@ export function Board({
           {canMove && interactive ? (
             <button
               type="button"
-              className="move-dot"
-              aria-label={label}
+              className={`move-dot${premove ? ' premove' : ''}`}
+              aria-label={`${premove ? 'Pre-move' : 'Move'} to ${columnName(c)}${size - r}`}
               onClick={() => onMove?.(point)}
             >
               <span className="visually-hidden">{label}</span>
@@ -147,7 +156,7 @@ export function Board({
       <button
         key={`slot-${key}`}
         type="button"
-        className={`wall-slot wall-slot-${w.orientation.toLowerCase()}`}
+        className={`wall-slot wall-slot-${w.orientation.toLowerCase()}${premove ? ' premove' : ''}`}
         style={wallStyle(w.orientation, w.r, w.c, cell, SLOT_THICKNESS)}
         aria-label={label}
         title={label}

@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 
 interface GameOptionsProps {
   readonly title?: string;
+  readonly closeLabel?: string;
   readonly onClose: () => void;
   readonly children?: ReactNode;
 }
@@ -10,7 +11,7 @@ interface GameOptionsProps {
  * Lightweight in-match options sheet. Holds the move log, match details and the
  * standard Blockade instructions without letting the game viewport scroll.
  */
-export function GameOptions({ title = 'Options', onClose, children }: GameOptionsProps) {
+export function GameOptions({ title = 'Options', closeLabel = 'Close options', onClose, children }: GameOptionsProps) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -30,7 +31,7 @@ export function GameOptions({ title = 'Options', onClose, children }: GameOption
       >
         <header className="game-options-head">
           <h2>{title}</h2>
-          <button type="button" className="game-options-close" onClick={onClose} aria-label="Close options">
+          <button type="button" className="game-options-close" onClick={onClose} aria-label={closeLabel}>
             ×
           </button>
         </header>

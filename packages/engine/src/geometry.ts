@@ -72,9 +72,15 @@ export function wallPlacementError(
   c: number,
 ): WallPlacementError {
   if (!wallAnchorInBounds(size, orientation, r, c)) return 'WALL_OUT_OF_BOUNDS';
-  if (walls.some((w) => w.orientation === orientation && w.r === r && w.c === c)) {
-    return 'WALL_OVERLAP';
-  }
+  // Walls span two cells along their line, so collinear walls anchored one
+  // segment apart overlap even when their anchors differ.
+  const overlaps = walls.some((w) => {
+    if (w.orientation !== orientation) return false;
+    return orientation === 'H'
+      ? w.r === r && Math.abs(w.c - c) < 2
+      : w.c === c && Math.abs(w.r - r) < 2;
+  });
+  if (overlaps) return 'WALL_OVERLAP';
   // A horizontal and vertical wall sharing an anchor cross in the centre.
   if (walls.some((w) => w.orientation !== orientation && w.r === r && w.c === c)) {
     return 'WALL_CROSSING';

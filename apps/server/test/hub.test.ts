@@ -270,6 +270,34 @@ describe('rooms', () => {
   });
 });
 
+describe('quick chat', () => {
+  it('relays allow-listed messages and rejects unknown ids or spam', () => {
+    const now = { value: T0 };
+    const hub = makeHub(now);
+    const { a, b, match } = roomMatch(hub, now);
+    a.clear();
+    b.clear();
+
+    hub.handle(a.id, { type: 'chat', matchId: match.id, optionId: 'greet-good-1' });
+    expect(a.last('chat')?.chat.text).toBe('Good luck, have fun!');
+    expect(b.last('chat')?.chat.from.id).toBe(a.id);
+    expect(b.last('chat')?.chat.tone).toBe('good');
+
+    hub.handle(a.id, { type: 'chat', matchId: match.id, optionId: 'not-a-real-option' });
+    expect(a.errors()).toContain('BAD_MESSAGE');
+
+    now.value += 100;
+    hub.handle(a.id, { type: 'chat', matchId: match.id, optionId: 'greet-good-2' });
+    expect(a.errors()).toContain('RATE_LIMITED');
+
+    now.value += 1000;
+    a.clear();
+    hub.handle(a.id, { type: 'chat', matchId: match.id, optionId: 'flirty-spicy-1' });
+    expect(b.last('chat')?.chat.text).toBe('You’re dangerously good at this.');
+    expect(b.last('chat')?.chat.tone).toBe('spicy');
+  });
+});
+
 describe('authoritative moves and clocks', () => {
   it('rejects wrong turns and illegal moves, applies legal moves to both players', () => {
     const now = { value: T0 };

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Move, Player, WallMove } from '@barricade/engine';
-import { legalWallMoves, modeById, timeControlById } from '@barricade/engine';
+import { isLegalMove, legalWallMoves, modeById, timeControlById } from '@barricade/engine';
 import { Board } from '../components/Board.js';
-import { BackIcon, DrawIcon, FlagIcon, OptionsIcon } from '../components/GameIcons.js';
+import { ChatPanel } from '../components/ChatPanel.js';
+import { BackIcon, ChatIcon, DrawIcon, FlagIcon, OptionsIcon } from '../components/GameIcons.js';
 import { GameOptions } from '../components/GameOptions.js';
 import { Modal } from '../components/Modal.js';
 import { PlayerBar } from '../components/PlayerBar.js';
@@ -27,6 +28,9 @@ export function OnlineMatchScreen() {
   const [now, setNow] = useState(() => Date.now());
   const [confirmResign, setConfirmResign] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatSeen, setChatSeen] = useState(0);
+  const [preMove, setPreMove] = useState<Move | null>(null);
   const previousPly = useRef(0);
   const previousMatchId = useRef<string | null>(null);
   const previousStatus = useRef<string | null>(null);
@@ -60,6 +64,8 @@ export function OnlineMatchScreen() {
       previousStatus.current = match.status;
       setPending(false);
       setMode('move');
+      setPreMove(null);
+      setChatSeen(0);
       return;
     }
 
@@ -108,6 +114,14 @@ export function OnlineMatchScreen() {
   }, []);
 
   const canAct = Boolean(match) && match!.status === 'active' && status === 'online' && match!.game.turn === match!.youAre && !pending;
+  const canPremove =
+    Boolean(match) &&
+    match!.status === 'active' &&
+    status === 'online' &&
+    match!.game.turn !== match!.youAre &&
+    !pending &&
+    !match!.game.result;
+  const canInteract = canAct || canPremove;
   const boardRef = useRef<HTMLDivElement | null>(null);
 
   const sendMove = (move: Move) => {
@@ -117,26 +131,53 @@ export function OnlineMatchScreen() {
     sfx(move.kind === 'wall' ? 'wall' : 'move');
   };
 
+  const handleBoardMove = (move: Move) => {
+    if (canAct) {
+      sendMove(move);
+      return;
+    }
+    if (canPremove) setPreMove(move);
+  };
+
   const dragLegalWalls = useMemo<WallMove[]>(() => {
-    if (!match || !canAct) return [];
-    return legalWallMoves(match.game, match.game.turn);
-  }, [match, canAct]);
+    if (!match || !canInteract) return [];
+    return legalWallMoves(match.game, match.youAre);
+  }, [match, canInteract]);
 
   const wallDrag = useWallDrag({
     size: match?.game.config.size ?? 9,
     orientation,
-    enabled: Boolean(match) && canAct && match!.game.wallsLeft[match!.game.turn] > 0,
+    enabled: Boolean(match) && canInteract && match!.game.wallsLeft[match!.youAre] > 0,
     legalWalls: dragLegalWalls,
     boardRef,
     onDrop: (move) => {
       setMode('wall');
-      sendMove(move);
+      handleBoardMove(move);
     },
     onInvalid: () => {
       sfx('invalid');
       toast('That spot overlaps another wall or seals a route. Use a highlighted slot.', 'error');
     },
   });
+
+  useEffect(() => {
+    if (!match || !preMove) return;
+    if (match.status !== 'active' || match.game.turn !== match.youAre || pending) return;
+    const queued = preMove;
+    setPreMove(null);
+    if (isLegalMove(match.game, queued)) {
+      sendMove(queued);
+      toast('Pre-move played.', 'success');
+    } else {
+      toast('Pre-move cancelled — the board changed.', 'info');
+    }
+  }, [match, preMove, pending, sendMove, toast]);
+
+  useEffect(() => {
+    if (!chatOpen || !match) return;
+    const selfId = match[match.youAre].id;
+    setChatSeen(online.chatLog.filter((entry) => entry.from.id !== selfId).length);
+  }, [chatOpen, online.chatLog, match]);
 
   useFixedMatchScreen(Boolean(match));
 
@@ -197,12 +238,18 @@ export function OnlineMatchScreen() {
   const incomingDraw = online.drawOffer?.matchId === match.id ? online.drawOffer : null;
   const rematchRequestedByMe = online.rematchRequests.some((player) => player.id === you.id);
   const rematchRequestedByOpponent = online.rematchRequests.some((player) => player.id !== you.id);
+  const opponentChatCount = online.chatLog.filter((entry) => entry.from.id !== you.id).length;
+  const unreadChat = Math.max(0, opponentChatCount - chatSeen);
+  const openChat = () => {
+    setChatSeen(opponentChatCount);
+    setChatOpen(true);
+  };
 
   const backToLobby = () => {
     online.leaveMatch(match.id);
     navigate('/online');
   };
-  const canPlaceWall = canAct && match.game.wallsLeft[match.game.turn] > 0;
+  const canPlaceWall = canInteract && match.game.wallsLeft[match.youAre] > 0;
 
   return (
     <div className="game-screen">
@@ -350,6 +397,9 @@ export function OnlineMatchScreen() {
                   Rematch
                 </button>
               ) : null}
+              <button type="button" className="btn btn-sm" onClick={openChat}>
+                Chat{unreadChat > 0 ? ` (${unreadChat})` : ''}
+              </button>
               <button type="button" className="btn btn-sm" onClick={backToLobby}>
                 Back to lobby
               </button>
@@ -362,11 +412,14 @@ export function OnlineMatchScreen() {
           <Board
             boardRef={boardRef}
             state={match.game}
-            interactive={canAct}
+            interactive={canInteract}
+            player={match.youAre}
+            premove={canPremove}
+            premoveTarget={preMove?.kind === 'move' ? preMove.to : null}
             mode={mode}
             wallOrientation={orientation}
-            onMove={(to) => sendMove({ kind: 'move', to })}
-            onWall={(wallMove) => sendMove(wallMove)}
+            onMove={(to) => handleBoardMove({ kind: 'move', to })}
+            onWall={(wallMove) => handleBoardMove(wallMove)}
             lastMove={match.game.lastMove?.move ?? null}
             dragging={wallDrag.dragging}
             dragCandidate={wallDrag.candidate}
@@ -395,6 +448,19 @@ export function OnlineMatchScreen() {
         </span>
         {drawOfferByMe && active ? <span className="game-status-ply">Draw offered</span> : null}
       </div>
+
+      {active && preMove ? (
+        <div className="game-premove">
+          <span>
+            Pre-move queued · {describeMove(preMove, match.config.size)}
+          </span>
+          <button type="button" onClick={() => setPreMove(null)}>
+            Cancel
+          </button>
+        </div>
+      ) : active && canPremove ? (
+        <div className="game-premove hint">Opponent’s turn — tap a dot or wall slot to queue your pre-move.</div>
+      ) : null}
 
       {!finished ? (
         <>
@@ -442,6 +508,10 @@ export function OnlineMatchScreen() {
           </div>
 
           <nav className="game-actions" aria-label="Match actions">
+            <button type="button" className="game-action" onClick={openChat}>
+              <ChatIcon />
+              <span>Chat{unreadChat > 0 ? ` (${unreadChat})` : ''}</span>
+            </button>
             <button
               type="button"
               className="game-action"
@@ -461,6 +531,16 @@ export function OnlineMatchScreen() {
             </button>
           </nav>
         </>
+      ) : null}
+
+      {chatOpen ? (
+        <ChatPanel
+          messages={online.chatLog}
+          selfId={you.id}
+          onSend={(option) => online.sendChat(match.id, option.id)}
+          onClose={() => setChatOpen(false)}
+          disabled={status !== 'online'}
+        />
       ) : null}
 
       {optionsOpen ? (
@@ -510,7 +590,10 @@ export function OnlineMatchScreen() {
                 Leave match
               </button>
             </div>
-            <p className="game-options-note">Undo is disabled online. Moves are authoritative on the server.</p>
+            <p className="game-options-note">
+              Pre-move: while waiting, tap a dot or wall slot to queue your next move — it plays automatically
+              if it is still legal. Undo is disabled online and moves are authoritative on the server.
+            </p>
           </section>
         </GameOptions>
       ) : null}

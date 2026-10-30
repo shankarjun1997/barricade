@@ -6,6 +6,7 @@ import {
   replay,
   timeControlById,
   validateConfig,
+  wallPlacementError,
   type BotPersonalityId,
   type GameConfig,
   type GameState,
@@ -177,6 +178,12 @@ export function loadMatch(): ActiveMatch | null {
     if (!pawn || pawn.r < 0 || pawn.r >= size || pawn.c < 0 || pawn.c >= size) return null;
   }
   if (!Array.isArray(value.game.history) || !Array.isArray(value.game.walls)) return null;
+  const seen: typeof value.game.walls = [];
+  for (const wall of value.game.walls) {
+    if (!wall || !['H', 'V'].includes(wall.orientation)) return null;
+    if (wallPlacementError(size, seen, wall.orientation, wall.r, wall.c) !== null) return null;
+    seen.push(wall);
+  }
   return value;
 }
 

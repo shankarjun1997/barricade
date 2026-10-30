@@ -47,10 +47,10 @@ All frames are JSON. Server messages are authoritative snapshots or notices.
 
 **Client → server:** `hello`, `rename`, `queue_join`, `queue_leave`, `room_create`, `room_join`,
 `room_leave`, `move`, `resign`, `draw_offer`, `draw_respond`, `rematch_request`, `rematch_respond`,
-`match_leave`, `ping`.
+`chat`, `match_leave`, `ping`.
 
 **Server → client:** `welcome`, `error`, `lobby`, `queue`, `room`, `match`, `match_end`, `draw_offer`,
-`rematch_state`, `notice`, `pong`, `session_replaced`, `server_restart`.
+`rematch_state`, `chat`, `notice`, `pong`, `session_replaced`, `server_restart`.
 
 Errors carry a typed code (`AUTH_FAILED`, `INVALID_CONFIG`, `ROOM_NOT_FOUND`, `ROOM_FULL`,
 `ROOM_STARTED`, `NOT_YOUR_TURN`, `ILLEGAL_MOVE`, `RATE_LIMITED`, `MATCH_NOT_FOUND`, `BAD_MESSAGE`, …).
@@ -133,19 +133,33 @@ active matches do not survive a spin-down. Use a paid disk or PostgreSQL for dur
 deliberately a single-writer store; horizontal scaling needs PostgreSQL + Redis (see roadmap).
 Match/queue state is small for early use, but no capacity claim is made without load tests.
 
+## Quick chat and pre-move
+
+- Quick chat is a fixed, server-validated catalog (`packages/protocol/src/chat.ts`): Good / Playful /
+  Spicy tones across greetings, respect, hype, strategy, jokes, trash talk, flirty and rematch genres.
+  Clients send an `optionId`; the server rejects anything outside the allow-list and relays the message
+  with sender, timestamp and decoded text. There is no free-text chat. Messages are rate-limited
+  (900 ms) and are live-only (not persisted or replayed after reconnect).
+- Pre-move is a client-side convenience: while the opponent's clock runs, a player can queue a pawn
+  move or wall placement. When the turn flips, the client checks the queued move against the new
+  authoritative state and submits it only if legal; otherwise it is discarded. The server has no
+  pre-move state and re-validates every submitted move.
+
 ## Security controls in this phase
 
 - Origin allow-list for WebSocket upgrades (`ALLOWED_ORIGINS`).
 - Zod validation on every client frame; 64 KiB frame limit; 80 msg/s per connection; HTTP rate limit.
 - Server-side engine validation; no client-supplied clocks, ratings or results are trusted.
 - Constant-ish token handling: generated with `randomBytes`, compared via SHA-256 hashes.
-- No secrets in the client; no PII beyond a chosen display name; no chat or microphone data.
+- No secrets in the client; no PII beyond a chosen display name; no free-text chat or microphone data.
+  Quick chat is restricted to the server-side allow-list.
 - Rate limiting is per-process; distributed limits arrive with Redis.
 
 ## Known limitations
 
 - Guests only; no account recovery across browser storage loss.
 - JSON persistence is single-instance; no horizontal scale yet.
-- No spectators, tournaments, chat, reactions, friends or moderation tools.
+- No spectators, tournaments, free-text chat, reactions, friends or moderation tools.
+- Quick chat is not persisted, so reconnecting players miss earlier messages.
 - No anti-collusion/anti-cheat analytics yet.
 - Server capacity and latency have not been load-tested.

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type {
+  ChatMessage,
   ClientMessage,
   LobbySnapshot,
   MatchSnapshot,
@@ -54,6 +55,7 @@ export interface OnlineContextValue {
   readonly match: MatchSnapshot | null;
   readonly drawOffer: { matchId: string; from: PublicPlayer } | null;
   readonly rematchRequests: readonly PublicPlayer[];
+  readonly chatLog: readonly ChatMessage[];
   readonly notice: OnlineNotice | null;
   readonly sessionNotice: string | null;
   readonly latencyMs: number | null;
@@ -74,6 +76,7 @@ export interface OnlineContextValue {
   respondDraw: (matchId: string, accept: boolean) => void;
   requestRematch: (matchId: string) => void;
   respondRematch: (matchId: string, accept: boolean) => void;
+  sendChat: (matchId: string, optionId: string) => void;
   leaveMatch: (matchId: string) => void;
   clearNotice: () => void;
 }
@@ -131,6 +134,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
   const [match, setMatch] = useState<MatchSnapshot | null>(null);
   const [drawOffer, setDrawOffer] = useState<{ matchId: string; from: PublicPlayer } | null>(null);
   const [rematchRequests, setRematchRequests] = useState<readonly PublicPlayer[]>([]);
+  const [chatLog, setChatLog] = useState<readonly ChatMessage[]>([]);
   const [notice, setNotice] = useState<OnlineNotice | null>(null);
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
@@ -198,6 +202,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
         setMatch(message.match);
         setServerOffset(message.match.serverNow - Date.now());
         setRematchRequests(message.match.rematchRequests);
+        setChatLog((current) => (current[0] && current[0].matchId !== message.match.id ? [] : current));
         if (!message.match.drawOfferBy) setDrawOffer(null);
         return;
       case 'draw_offer':
@@ -205,6 +210,11 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
         return;
       case 'rematch_state':
         setRematchRequests(message.requestedBy);
+        return;
+      case 'chat':
+        setChatLog((current) =>
+          current.some((entry) => entry.id === message.chat.id) ? current : [...current.slice(-39), message.chat],
+        );
         return;
       case 'notice':
         pushNotice(message.kind, message.message);
@@ -353,6 +363,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
     setQueue({ state: 'idle' });
     setDrawOffer(null);
     setRematchRequests([]);
+    setChatLog([]);
     setSessionNotice(null);
     setStatus('idle');
     attemptsRef.current = 0;
@@ -411,6 +422,10 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
     (matchId: string) => send({ type: 'rematch_request', matchId }),
     [send],
   );
+  const sendChat = useCallback(
+    (matchId: string, optionId: string) => send({ type: 'chat', matchId, optionId }),
+    [send],
+  );
   const respondRematch = useCallback(
     (matchId: string, accept: boolean) => send({ type: 'rematch_respond', matchId, accept }),
     [send],
@@ -421,6 +436,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       setMatch(null);
       setDrawOffer(null);
       setRematchRequests([]);
+      setChatLog([]);
     },
     [send],
   );
@@ -473,6 +489,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       match,
       drawOffer,
       rematchRequests,
+      chatLog,
       notice,
       sessionNotice,
       latencyMs,
@@ -493,6 +510,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       respondDraw,
       requestRematch,
       respondRematch,
+      sendChat,
       leaveMatch,
       clearNotice,
     }),
@@ -508,6 +526,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       match,
       drawOffer,
       rematchRequests,
+      chatLog,
       notice,
       sessionNotice,
       latencyMs,
@@ -528,6 +547,7 @@ export function OnlineProvider({ children }: { children: ReactNode }) {
       respondDraw,
       requestRematch,
       respondRematch,
+      sendChat,
       leaveMatch,
       clearNotice,
     ],

@@ -17,7 +17,9 @@ import {
   type Move,
   type Player,
 } from '@barricade/engine';
+import { chatOptionById } from '@barricade/protocol';
 import type {
+  ChatMessage,
   ClientMessage,
   LeaderboardEntry,
   LobbySnapshot,
@@ -37,6 +39,7 @@ export const MATCH_RETENTION_MS = 30 * 60_000;
 export const ROOM_WAITING_RETENTION_MS = 10 * 60_000;
 export const DRAW_OFFER_MS = 60_000;
 const MOVE_COOLDOWN_MS = 120;
+const CHAT_COOLDOWN_MS = 900;
 const MAX_WALLS = 24;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -70,6 +73,7 @@ interface PlayerRecord {
   roomCode: string | null;
   matchId: string | null;
   lastMoveAt: number;
+  lastChatAt: number;
 }
 
 interface RoomRecord {
@@ -220,6 +224,7 @@ export class Hub {
         roomCode: null,
         matchId: null,
         lastMoveAt: 0,
+        lastChatAt: 0,
       };
       this.players.set(player.id, player);
     }
@@ -358,6 +363,9 @@ export class Hub {
         return;
       case 'rematch_respond':
         this.respondRematch(player, message.matchId, message.accept);
+        return;
+      case 'chat':
+        this.sendChat(player, message.matchId, message.optionId);
         return;
       case 'match_leave':
         this.leaveMatch(player, message.matchId);
@@ -894,6 +902,42 @@ export class Hub {
     this.finishMatch(match, engineResign(match.game, color).result!, 'resign');
   }
 
+  private sendChat(player: PlayerRecord, matchId: string, optionId: string): void {
+    const match = this.matches.get(matchId);
+    if (!match) {
+      this.sendError(player.id, 'MATCH_NOT_FOUND', 'That match could not be found.');
+      return;
+    }
+    const color = colorOf(match, player.id);
+    if (!color) {
+      this.sendError(player.id, 'NOT_CONNECTED', 'You are not a player in this match.');
+      return;
+    }
+    const option = chatOptionById(optionId);
+    if (!option) {
+      this.sendError(player.id, 'BAD_MESSAGE', 'That chat option is not available.');
+      return;
+    }
+    const now = this.now();
+    if (now - player.lastChatAt < CHAT_COOLDOWN_MS) {
+      this.sendError(player.id, 'RATE_LIMITED', 'Easy there — one message at a time.');
+      return;
+    }
+    player.lastChatAt = now;
+    const chat: ChatMessage = {
+      id: randomUUID(),
+      matchId,
+      from: this.publicPlayer(player.id),
+      optionId: option.id,
+      text: option.text,
+      tone: option.tone,
+      genre: option.genre,
+      sentAt: now,
+    };
+    this.send(player.id, { type: 'chat', chat });
+    this.send(opponentId(match, color), { type: 'chat', chat });
+  }
+
   private offerDraw(player: PlayerRecord, matchId: string): void {
     const match = this.matches.get(matchId);
     if (!match || match.status !== 'active') {
@@ -1405,6 +1449,7 @@ export class Hub {
         roomCode: null,
         matchId: null,
         lastMoveAt: 0,
+        lastChatAt: 0,
       });
     }
 
